@@ -1,11 +1,11 @@
-package org.jetbrains.plugins.template
+package org.joel3112.componentbuilder
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
 
 @NonNls
-private const val BUNDLE = "messages.MyBundle"
+private const val BUNDLE = "messages.BuilderBundle"
 
 object MyBundle : DynamicBundle(BUNDLE) {
 

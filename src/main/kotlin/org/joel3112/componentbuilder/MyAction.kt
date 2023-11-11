@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.template
+package org.joel3112.componentbuilder
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
