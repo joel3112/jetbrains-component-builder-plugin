@@ -9,13 +9,15 @@
     <resource-bundle>messages.BuilderBundle</resource-bundle>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="org.joel3112.plugins.componentbuilder.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <projectConfigurable
+                groupId="settings"
+                instance="org.joel3112.componentbuilder.settings.ui.BuilderSettingsConfigurable"
+                id="ReactBuilderConfigurable"
+                bundle="messages.BuilderBundle"
+                key="builder.settings.title"/>
+        <projectService
+                serviceImplementation="org.joel3112.componentbuilder.settings.data.SettingsService"/>
     </extensions>
-
-    <applicationListeners>
-        <listener class="org.joel3112.componentbuilder.listeners.MyApplicationActivationListener"
-                  topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
 
     <actions>
         <action class="org.joel3112.componentbuilder.MyAction" id="MyAction">
