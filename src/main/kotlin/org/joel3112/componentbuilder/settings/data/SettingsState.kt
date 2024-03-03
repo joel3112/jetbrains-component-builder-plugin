@@ -1,11 +1,15 @@
 package org.joel3112.componentbuilder.settings.data
 
+import com.intellij.util.xmlb.annotations.OptionTag
 import java.util.*
 
 class SettingsState {
 
+    @get:OptionTag("NAME")
     var name: String = "my-component"
-    var items: Array<String> = arrayOf("my-component", "my-component2")
+
+    @get:OptionTag("ITEMS")
+    var items: MutableList<Item> = mutableListOf(Item("item1", "tsx"), Item("item2", "ts"))
 
     fun copy(): SettingsState {
         val copy = SettingsState()
@@ -16,19 +20,20 @@ class SettingsState {
 
     override fun equals(other: Any?): Boolean {
         val that = other as SettingsState
-        return name == that.name && items.contentEquals(that.items)
+        val toTypedArray = items.toTypedArray()
+        return name == that.name && toTypedArray.contentEquals(that.items.toTypedArray())
     }
 
     override fun hashCode(): Int {
         var result = Objects.hash(name)
-        result = 31 * result + name.hashCode()
+        result = 31 * result + name.hashCode() + items.toTypedArray().contentHashCode()
         return result
     }
 
     override fun toString(): String = """
         SettingsState(
             name='$name'
-            items=${items.contentToString()}
+            items='${items.toTypedArray().contentToString()}'
         )
     """.trimIndent()
 }

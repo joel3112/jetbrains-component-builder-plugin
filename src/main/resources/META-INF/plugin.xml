@@ -15,13 +15,5 @@
                 id="ReactBuilderConfigurable"
                 bundle="messages.BuilderBundle"
                 key="builder.settings.title"/>
-        <projectService
-                serviceImplementation="org.joel3112.componentbuilder.settings.data.SettingsService"/>
     </extensions>
-
-    <actions>
-        <action class="org.joel3112.componentbuilder.MyAction" id="MyAction">
-            <add-to-group group-id="StructureViewPopupMenu"/>
-        </action>
-    </actions>
 </idea-plugin>

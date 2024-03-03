@@ -1,10 +1,13 @@
 package org.joel3112.componentbuilder.settings.data
 
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.util.xmlb.XmlSerializerUtil
 
+
+@Service(Service.Level.PROJECT)
 @State(
     name = "ComponentBuilderSettings",
     storages = [Storage("ComponentBuilderSettings.xml")]

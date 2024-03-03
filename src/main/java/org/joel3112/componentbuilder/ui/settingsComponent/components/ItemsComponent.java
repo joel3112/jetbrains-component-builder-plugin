@@ -2,46 +2,55 @@ package org.joel3112.componentbuilder.ui.settingsComponent.components;
 
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.FormBuilder;
+import org.joel3112.componentbuilder.settings.data.Item;
 import org.joel3112.componentbuilder.settings.data.MutableState;
 import org.joel3112.componentbuilder.ui.settingsComponent.Component;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ItemsComponent implements Component, MutableState<String[]> {
-    private final JBTextField[] textFields;
+public class ItemsComponent implements Component, MutableState<List<Item>> {
+    private final List<JBTextField> nameTextFields;
+    private final List<JBTextField> extensionTextFields;
 
-    public ItemsComponent(String[] items) {
-        textFields = new JBTextField[items.length];
-        for (int i = 0; i < items.length; i++) {
-            textFields[i] = new JBTextField(items[i]);
+    public ItemsComponent(List<Item> items) {
+        nameTextFields = new ArrayList<>();
+        extensionTextFields = new ArrayList<>();
+
+        for (Item item : items) {
+            nameTextFields.add(new JBTextField(item.getName()));
+            extensionTextFields.add(new JBTextField(item.getExtension()));
         }
     }
 
     @Override
     public void addToBuilder(FormBuilder formBuilder) {
         JPanel panel = new JPanel();
-        for (JBTextField textField : textFields) {
+        for (int i = 0; i < nameTextFields.size(); i++) {
             JPanel itemPanel = new JPanel();
-            itemPanel.add(new JLabel("Item:"));
-            itemPanel.add(textField);
+            itemPanel.add(new JLabel("Item:" + (i + 1)));
+            itemPanel.add(nameTextFields.get(i));
+            itemPanel.add(extensionTextFields.get(i));
             panel.add(itemPanel);
         }
         formBuilder.addLabeledComponent(panel, new JLabel());
     }
 
     @Override
-    public String[] getState() {
-        String[] values = new String[textFields.length];
-        for (int i = 0; i < textFields.length; i++) {
-            values[i] = textFields[i].getText();
+    public List<Item> getState() {
+        List<Item> values = new ArrayList<>();
+        for (int i = 0; i < nameTextFields.size(); i++) {
+            values.add(new Item(nameTextFields.get(i).getText(), extensionTextFields.get(i).getText()));
         }
         return values;
     }
 
     @Override
-    public void setState(String[] strings) {
-        for (int i = 0; i < strings.length; i++) {
-            textFields[i].setText(strings[i]);
+    public void setState(List<Item> items) {
+        for (int i = 0; i < items.size(); i++) {
+            nameTextFields.get(i).setText(items.get(i).getName());
+            extensionTextFields.get(i).setText(items.get(i).getExtension());
         }
     }
 }
