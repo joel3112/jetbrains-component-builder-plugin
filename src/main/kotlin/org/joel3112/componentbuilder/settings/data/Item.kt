@@ -4,9 +4,6 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 data class Item(
     @get:OptionTag("NAME")
-    var name: String,
-
-    @get:OptionTag("EXTENSION")
-    var extension: String
+    var name: String
 )
 

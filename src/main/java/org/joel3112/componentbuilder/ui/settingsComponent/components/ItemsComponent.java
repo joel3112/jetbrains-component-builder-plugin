@@ -12,15 +12,12 @@ import java.util.List;
 
 public class ItemsComponent implements Component, MutableState<List<Item>> {
     private final List<JBTextField> nameTextFields;
-    private final List<JBTextField> extensionTextFields;
 
     public ItemsComponent(List<Item> items) {
         nameTextFields = new ArrayList<>();
-        extensionTextFields = new ArrayList<>();
 
         for (Item item : items) {
             nameTextFields.add(new JBTextField(item.getName()));
-            extensionTextFields.add(new JBTextField(item.getExtension()));
         }
     }
 
@@ -31,7 +28,6 @@ public class ItemsComponent implements Component, MutableState<List<Item>> {
             JPanel itemPanel = new JPanel();
             itemPanel.add(new JLabel("Item:" + (i + 1)));
             itemPanel.add(nameTextFields.get(i));
-            itemPanel.add(extensionTextFields.get(i));
             panel.add(itemPanel);
         }
         formBuilder.addLabeledComponent(panel, new JLabel());
@@ -41,7 +37,7 @@ public class ItemsComponent implements Component, MutableState<List<Item>> {
     public List<Item> getState() {
         List<Item> values = new ArrayList<>();
         for (int i = 0; i < nameTextFields.size(); i++) {
-            values.add(new Item(nameTextFields.get(i).getText(), extensionTextFields.get(i).getText()));
+            values.add(new Item(nameTextFields.get(i).getText()));
         }
         return values;
     }
@@ -50,7 +46,6 @@ public class ItemsComponent implements Component, MutableState<List<Item>> {
     public void setState(List<Item> items) {
         for (int i = 0; i < items.size(); i++) {
             nameTextFields.get(i).setText(items.get(i).getName());
-            extensionTextFields.get(i).setText(items.get(i).getExtension());
         }
     }
 }

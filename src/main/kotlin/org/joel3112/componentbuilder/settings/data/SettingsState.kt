@@ -4,12 +4,11 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import java.util.*
 
 class SettingsState {
-
     @get:OptionTag("NAME")
     var name: String = "my-component"
 
     @get:OptionTag("ITEMS")
-    var items: MutableList<Item> = mutableListOf(Item("item1", "tsx"), Item("item2", "ts"))
+    var items: MutableList<Item> = mutableListOf(Item("Component"))
 
     fun copy(): SettingsState {
         val copy = SettingsState()
