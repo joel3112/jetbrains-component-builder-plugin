@@ -2,9 +2,8 @@ package org.joel3112.componentbuilder.settings.ui
 
 import com.intellij.util.ui.FormBuilder
 import org.joel3112.componentbuilder.settings.data.SettingsState
-import org.joel3112.componentbuilder.ui.settingsComponent.components.ItemsComponent
-import org.joel3112.componentbuilder.ui.settingsComponent.components.ListSelectorComponent
-import org.joel3112.componentbuilder.ui.settingsComponent.components.NameComponent
+import org.joel3112.componentbuilder.settings.ui.settingsComponent.components.ListSelectorComponent
+import org.joel3112.componentbuilder.settings.ui.settingsComponent.components.NameComponent
 import javax.swing.JComponent
 
 class SettingsUIViewImpl(initialState: SettingsState) : SettingsUIView {
