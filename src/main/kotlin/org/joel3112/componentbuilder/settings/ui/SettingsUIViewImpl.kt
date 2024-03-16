@@ -2,8 +2,8 @@ package org.joel3112.componentbuilder.settings.ui
 
 import com.intellij.util.ui.FormBuilder
 import org.joel3112.componentbuilder.settings.data.SettingsState
-import org.joel3112.componentbuilder.settings.ui.settingsComponent.components.ListSelectorComponent
-import org.joel3112.componentbuilder.settings.ui.settingsComponent.components.NameComponent
+import org.joel3112.componentbuilder.settings.ui.settingsComponent.ConfigurationComponent
+import org.joel3112.componentbuilder.settings.ui.settingsComponent.ListSelectorComponent
 import javax.swing.JComponent
 
 class SettingsUIViewImpl(initialState: SettingsState) : SettingsUIView {
@@ -13,33 +13,48 @@ class SettingsUIViewImpl(initialState: SettingsState) : SettingsUIView {
     override var state: SettingsState
         set(value) {
             settingsState = value
-            nameComponent.state = value.name
-//            itemsComponent.state = value.items
+            listSelectorComponent.state = value.items
+            configurationComponent.state = listSelectorComponent.selectedItem
         }
         get() {
             val state = SettingsState()
             with(state) {
-                name = nameComponent.state
-//                items = itemsComponent.state
-                println(listSelectorComponent.state)
-                println(listSelectorComponent.selectedItem)
+                items = listSelectorComponent.state
+//                val itemChanged = items.find { it.id == configurationComponent.state.id }
+//                if (itemChanged != null) {
+//                    itemChanged.name = configurationComponent.state.name
+//                }
+
             }
             return state
         }
 
-    private lateinit var nameComponent: NameComponent
     private lateinit var listSelectorComponent: ListSelectorComponent
-//    private lateinit var itemsComponent: ItemsComponent
+    private lateinit var configurationComponent: ConfigurationComponent
 
     override fun createComponent(): JComponent {
-        nameComponent = NameComponent(settingsState.name)
         listSelectorComponent = ListSelectorComponent(settingsState.items)
-//        itemsComponent = ItemsComponent(settingsState.items)
+        listSelectorComponent.selectItem(settingsState.items.first())
+        listSelectorComponent.addSelectionListener {
+            configurationComponent.state = listSelectorComponent.selectedItem
+        }
+
+        configurationComponent = ConfigurationComponent(settingsState.items.first())
+        configurationComponent.addNameChangeListener { item, name ->
+            if (listSelectorComponent.selectedItem.name != name) {
+                listSelectorComponent.state = listSelectorComponent.state.map {
+                    if (it.id == item.id) {
+                        it.name = name
+                    }
+                    it
+                }.toMutableList()
+            }
+            listSelectorComponent.selectItem(item)
+        }
 
         val formBuilder = FormBuilder.createFormBuilder()
-        nameComponent.addToBuilder(formBuilder)
         listSelectorComponent.addToBuilder(formBuilder)
-//        itemsComponent.addToBuilder(formBuilder)
+        configurationComponent.addToBuilder(formBuilder)
 
         return formBuilder.panel
     }
