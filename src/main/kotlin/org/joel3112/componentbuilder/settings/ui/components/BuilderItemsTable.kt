@@ -6,11 +6,9 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.util.ui.ColumnInfo
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import javax.swing.BorderFactory
 import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
 
@@ -33,7 +31,6 @@ class BuilderItemsTable(private val settingsProperty: ObservableMutableProperty<
         tableView.apply {
             columnSelectionAllowed = false
             tableHeader.reorderingAllowed = false
-            tableHeader.isVisible = false
             model.addTableModelListener {
                 itemsProperty.set(elements)
             }
@@ -52,8 +49,6 @@ class BuilderItemsTable(private val settingsProperty: ObservableMutableProperty<
     override fun createToolbarDecorator() = ToolbarDecorator
         .createDecorator(tableView, null)
         .setToolbarPosition(ActionToolbarPosition.TOP)
-        .setPanelBorder(BorderFactory.createEmptyBorder())
-        .setPanelBorder(JBUI.Borders.empty())
 
     override fun isUpDownSupported() = true
     override fun shouldEditRowOnCreation() = false
@@ -70,7 +65,7 @@ class BuilderItemsTable(private val settingsProperty: ObservableMutableProperty<
     override fun cloneElement(variable: Item) = variable.copy()
     override fun isEmpty(element: Item): Boolean = element.name.isEmpty()
 
-    private class NameColumn : ColumnInfo<Item, String>("Name") {
+    private class NameColumn : ColumnInfo<Item, String>("") {
         override fun valueOf(item: Item?) = item?.name
     }
 

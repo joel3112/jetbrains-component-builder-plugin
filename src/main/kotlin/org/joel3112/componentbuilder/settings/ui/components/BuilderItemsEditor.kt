@@ -13,6 +13,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
+import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.bindText
 import org.joel3112.componentbuilder.settings.data.Item
 import java.awt.Dimension
@@ -37,25 +38,26 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
 
     override fun Panel.createContent() {
         panel {
-            row("Name:") {
+            row(message("builder.settings.name")) {
                 nameTextField = textField()
-                    .comment("Enter the name")
+                    .comment(message("builder.settings.name.legend"))
                     .bindText(itemProperty, Item::name)
             }.enabledIf(selectedRowPredicate)
 
-            row("File path:") {
+            row(message("builder.settings.filePath")) {
                 filePathTextField = textField()
-                    .comment("Enter the file path")
+                    .comment(message("builder.settings.filePath.legend"))
                     .bindText(itemProperty, Item::filePath)
             }
 
-            row("Template:") {
+            row(message("builder.settings.template")) {}
+            row {
                 templateTextarea = textArea()
                     .align(Align.FILL)
                     .verticalAlign(VerticalAlign.FILL)
-                    .comment("Enter the template")
+                    .comment(message("builder.settings.template.legend"))
                     .applyToComponent {
-                        preferredSize = Dimension(0, 360)
+                        preferredSize = Dimension(0, 200)
                         font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.CONSOLE_PLAIN)
                     }
                     .bindText(itemProperty, Item::template)

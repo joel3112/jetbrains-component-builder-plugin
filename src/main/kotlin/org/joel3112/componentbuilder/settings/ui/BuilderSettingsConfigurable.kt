@@ -6,8 +6,9 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
+import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.SettingsState
@@ -42,12 +43,15 @@ class BuilderSettingsConfigurable(private val project: Project) : SearchableConf
 
     private val settingsPanel = panel {
         row {
+            text(message("builder.settings.description"))
+        }.bottomGap(BottomGap.SMALL)
+
+        row {
             cell(itemsTable.component)
                 .align(Align.FILL)
                 .applyToComponent {
                     preferredSize = Dimension(200, 0)
                 }
-                .gap(RightGap.COLUMNS)
 
             cell(itemsEditor.createPanel())
                 .applyIfEnabled()
@@ -81,7 +85,7 @@ class BuilderSettingsConfigurable(private val project: Project) : SearchableConf
         }
     }
 
-    override fun getDisplayName(): String = "Component Builder"
+    override fun getDisplayName(): String = message("builder.name")
 
     override fun getId(): String = "component-builder-settings"
 }
