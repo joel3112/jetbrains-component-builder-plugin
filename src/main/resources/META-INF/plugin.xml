@@ -16,4 +16,16 @@
                 bundle="messages.BuilderBundle"
                 key="builder.settings.title"/>
     </extensions>
+
+    <actions>
+        <group id="org.joel3112.componentbuilder.actions.BuilderActionGroup"
+               class="org.joel3112.componentbuilder.actions.BuilderActionGroup"
+               text="Builder"
+               description="Build file components"
+               popup="true"
+        >
+            <separator/>
+            <add-to-group group-id="NewGroup" anchor="first"/>
+        </group>
+    </actions>
 </idea-plugin>
