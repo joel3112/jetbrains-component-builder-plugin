@@ -10,7 +10,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import java.util.*
+import javax.swing.BorderFactory
 import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
 
@@ -41,17 +41,24 @@ class BuilderItemsTable(private val settingsProperty: ObservableMutableProperty<
             setShowGrid(false)
             setValues(itemsProperty.get())
         }
+        itemsProperty.afterChange {
+            refreshValues()
+        }
+        if (itemsProperty.get().isNotEmpty()) {
+            tableView.selection = listOf(itemsProperty.get().first())
+        }
     }
 
     override fun createToolbarDecorator() = ToolbarDecorator
         .createDecorator(tableView, null)
         .setToolbarPosition(ActionToolbarPosition.TOP)
+        .setPanelBorder(BorderFactory.createEmptyBorder())
         .setPanelBorder(JBUI.Borders.empty())
 
     override fun isUpDownSupported() = true
     override fun shouldEditRowOnCreation() = false
     override fun createListModel(): ListTableModel<*> = ListTableModel<Item>(NameColumn())
-    override fun createElement() = Item(UUID.randomUUID().toString(), "Unnamed")
+    override fun createElement() = Item()
     override fun addNewElement(newElement: Item) {
         super.addNewElement(newElement)
         SwingUtilities.invokeLater {
