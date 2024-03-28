@@ -1,5 +1,6 @@
 package org.joel3112.componentbuilder.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -10,11 +11,13 @@ import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.BuilderCreator
 
 
-class BuilderAction(val item: Item) : DumbAwareAction(
-    item.name,
-    "Create a new ${item.name} ${if (item.isChildFile) "child" else ""} file",
-    null
-) {
+class BuilderAction(val item: Item) : DumbAwareAction() {
+    init {
+        templatePresentation.text = item.name
+        if (item.icon.isNotEmpty()) {
+            templatePresentation.icon = AllIcons.FileTypes::class.java.getField(item.icon).get(null) as javax.swing.Icon
+        }
+    }
 
     private fun getLocation(file: VirtualFile): VirtualFile {
         return if (file.isDirectory) {

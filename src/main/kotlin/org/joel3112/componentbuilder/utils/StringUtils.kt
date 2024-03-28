@@ -35,6 +35,9 @@ class StringUtils {
         }
 
         fun replaceVariables(content: String, value: String): String {
+            if (content.isEmpty()) {
+                return value
+            }
             return content.replace("${"$"}cname${"$"}", value)
         }
     }

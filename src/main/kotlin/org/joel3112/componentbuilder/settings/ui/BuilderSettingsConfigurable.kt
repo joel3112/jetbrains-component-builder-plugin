@@ -38,7 +38,7 @@ class BuilderSettingsConfigurable(private val project: Project) : SearchableConf
         }
 
     private val itemsTable = BuilderItemsTable(settingsProperty)
-    private val itemsEditor = BuilderItemsEditor(itemProperty, project)
+    private val itemsEditor = BuilderItemsEditor(itemProperty)
 
 
     private val settingsPanel = panel {

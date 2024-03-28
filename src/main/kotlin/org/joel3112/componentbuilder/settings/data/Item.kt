@@ -7,11 +7,14 @@ data class Item(
     @get:OptionTag("ID")
     var id: String = UUID.randomUUID().toString(),
 
+    @get:OptionTag("IS_CHILD_FILE")
+    var isChildFile: Boolean = false,
+
     @get:OptionTag("NAME")
     var name: String = "Unnamed",
 
-    @get:OptionTag("IS_CHILD_FILE")
-    var isChildFile: Boolean = false,
+    @get:OptionTag("ICON")
+    var icon: String = "",
 
     @get:OptionTag("FILE_PATH")
     var filePath: String = "",
