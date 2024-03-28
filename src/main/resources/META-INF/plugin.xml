@@ -15,6 +15,9 @@
                 id="ReactBuilderConfigurable"
                 bundle="messages.BuilderBundle"
                 key="builder.settings.title"/>
+
+        <notificationGroup id="Component Builder plugin"
+                           displayType="BALLOON" />
     </extensions>
 
     <actions>

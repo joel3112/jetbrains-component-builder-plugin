@@ -7,7 +7,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.actions.components.CreateDialog
 import org.joel3112.componentbuilder.settings.data.Item
-import org.joel3112.componentbuilder.utils.Creator
+import org.joel3112.componentbuilder.utils.BuilderCreator
+
 
 class BuilderAction(val item: Item) : DumbAwareAction(
     item.name,
@@ -22,12 +23,14 @@ class BuilderAction(val item: Item) : DumbAwareAction(
     }
 
     private fun actionPerformedForChildFile(e: AnActionEvent) {
+        val project = e.project!!
+
         val selectedLocation: VirtualFile? = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
         val targetLocation = selectedLocation?.let { getLocation(it) }
 
         if (selectedLocation != null) {
             ApplicationManager.getApplication().runWriteAction(
-                Creator(targetLocation!!, selectedLocation.nameWithoutExtension, item)
+                BuilderCreator(targetLocation!!, selectedLocation.nameWithoutExtension, item, project)
             )
         }
     }
@@ -46,7 +49,7 @@ class BuilderAction(val item: Item) : DumbAwareAction(
         val targetLocation = selectedLocation?.let { getLocation(it) }
 
         ApplicationManager.getApplication().runWriteAction(
-            Creator(targetLocation!!, dialog.getCName(), item)
+            BuilderCreator(targetLocation!!, dialog.getCName(), item, project)
         )
     }
 

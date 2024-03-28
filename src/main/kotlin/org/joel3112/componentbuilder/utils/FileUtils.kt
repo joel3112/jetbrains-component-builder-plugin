@@ -1,8 +1,11 @@
 package org.joel3112.componentbuilder.utils
 
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.*
 import java.util.*
+
 
 class FileUtils {
     companion object {
@@ -16,17 +19,9 @@ class FileUtils {
             return tmpDir.exists()
         }
 
-        fun getFileNameFromPath(filePath: String): String {
-            val file = File(filePath)
-            return file.name
-        }
-
-        fun getDirectoryFromPath(filePath: String?): String {
-            val file = File(filePath)
-            if (file.parentFile == null) {
-                return ""
-            }
-            return file.parent
+        fun openFile(file: VirtualFile, project: Project) {
+            val editorManager = FileEditorManager.getInstance(project)
+            editorManager.openFile(file, true)
         }
     }
 }

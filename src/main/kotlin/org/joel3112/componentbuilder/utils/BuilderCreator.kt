@@ -1,15 +1,18 @@
 package org.joel3112.componentbuilder.utils
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import java.io.File
 
 
-class Creator(
+class BuilderCreator(
     private var directory: VirtualFile,
     cname: String,
     item: Item,
+    private val project: Project
 ) : Runnable {
 
     private val cTemplate = StringUtils.replaceVariables(item.template, cname)
@@ -25,7 +28,7 @@ class Creator(
     @Throws(Exception::class)
     fun writeFile() {
         if (FileUtils.fileExists(cFile.path)) {
-            println("File is already exists: ${cFile.path}")
+            NotificationUtils.notifyError(message("builder.notification.create.error", cFilePath, directory.path), project)
             return
         }
 
@@ -38,10 +41,13 @@ class Creator(
         }
 
         try {
-            FileUtils.writeFile(
-                cDirectory.createChildData(cDirectory, cFile.name),
-                cTemplate
-            )
+            val cVirtualFile = cDirectory.createChildData(cDirectory, cFile.name)
+
+            FileUtils.writeFile(cVirtualFile, cTemplate)
+            FileUtils.openFile(cVirtualFile, project)
+
+            NotificationUtils.notifyInfo(message("builder.notification.create.success", cFilePath), project)
+
         } catch (e: Exception) {
             throw Exception("" + (e.message) + " for file " + cDirectory, e.fillInStackTrace())
         }
