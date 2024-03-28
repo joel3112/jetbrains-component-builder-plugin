@@ -34,7 +34,7 @@ class BuilderAction(val item: Item) : DumbAwareAction(
 
     private fun actionPerformedForParentFile(e: AnActionEvent) {
         val project = e.project!!
-        val dialog = CreateDialog(project)
+        val dialog = CreateDialog(project, item)
 
         dialog.pack()
         dialog.show()

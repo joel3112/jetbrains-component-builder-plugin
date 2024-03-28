@@ -9,10 +9,11 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.joel3112.componentbuilder.BuilderBundle.message
+import org.joel3112.componentbuilder.settings.data.Item
 import javax.swing.JComponent
 
 
-class CreateDialog(private val project: Project) : DialogWrapper(project) {
+class CreateDialog(private val project: Project, val item: Item) : DialogWrapper(project) {
     var isCanceled = false
         protected set
 
@@ -49,20 +50,18 @@ class CreateDialog(private val project: Project) : DialogWrapper(project) {
     init {
         super.init()
         isResizable = false
-        title = message("builder.popup.create.title")
+        title = message("builder.popup.create.title", item.name)
+        okAction.isEnabled = false
     }
 
     fun getCName(): String {
         return textField.component.text
     }
 
-    override fun createCenterPanel(): JComponent {
-        return createPanel
-    }
+    override fun createCenterPanel(): JComponent = createPanel
 
     override fun doOKAction() {
         isCanceled = false
-
         super.doOKAction()
     }
 

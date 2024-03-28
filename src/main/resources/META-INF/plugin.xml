@@ -20,8 +20,9 @@
     <actions>
         <group id="org.joel3112.componentbuilder.actions.ParentBuilderActionGroup"
                class="org.joel3112.componentbuilder.actions.BuilderParentActionGroup"
-               text="File from builder"
+               text="File from Builder"
                description="Build file from builder settings"
+               icon="/icons/builder.svg"
                popup="true"
         >
             <add-to-group group-id="NewGroup" anchor="first"/>
@@ -29,8 +30,9 @@
         </group>
         <group id="org.joel3112.componentbuilder.actions.DependentBuilderActionGroup"
                class="org.joel3112.componentbuilder.actions.BuilderChildActionGroup"
-               text="File from builder"
+               text="File from Builder"
                description="Build child file from builder settings"
+               icon="/icons/builder.svg"
                popup="true"
         >
             <add-to-group group-id="NewGroup" anchor="first"/>
