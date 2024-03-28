@@ -10,6 +10,9 @@ data class Item(
     @get:OptionTag("NAME")
     var name: String = "Unnamed",
 
+    @get:OptionTag("IS_DEPENDENT_FILE")
+    var isDependentFile: Boolean = false,
+
     @get:OptionTag("FILE_PATH")
     var filePath: String = "",
 
