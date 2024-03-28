@@ -18,14 +18,24 @@
     </extensions>
 
     <actions>
-        <group id="org.joel3112.componentbuilder.actions.BuilderActionGroup"
-               class="org.joel3112.componentbuilder.actions.BuilderActionGroup"
-               text="Builder"
-               description="Build file components"
+        <group id="org.joel3112.componentbuilder.actions.ParentBuilderActionGroup"
+               class="org.joel3112.componentbuilder.actions.BuilderParentActionGroup"
+               text="File from builder"
+               description="Build file from builder settings"
                popup="true"
         >
-            <separator/>
             <add-to-group group-id="NewGroup" anchor="first"/>
+            <separator/>
         </group>
+        <group id="org.joel3112.componentbuilder.actions.DependentBuilderActionGroup"
+               class="org.joel3112.componentbuilder.actions.BuilderChildActionGroup"
+               text="File from builder"
+               description="Build child file from builder settings"
+               popup="true"
+        >
+            <add-to-group group-id="NewGroup" anchor="first"/>
+            <separator/>
+        </group>
+
     </actions>
 </idea-plugin>

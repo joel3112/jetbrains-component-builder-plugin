@@ -29,7 +29,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var filePathTextField: Cell<JBTextField>
     private lateinit var templateTextarea: Cell<JBTextArea>
-    private lateinit var isDependentFileCheckBox: Cell<JBCheckBox>
+    private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
 
     private val selectedRowPredicate = object : ComponentPredicate() {
         override fun invoke() = itemProperty.isNotNull().get()
@@ -40,17 +40,24 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
             }
     }
     private val checkedIsDependentFilePredicate = object : ComponentPredicate() {
-        override fun invoke() = isDependentFileCheckBox.component.isSelected
+        override fun invoke() = isChildFileCheckBox.component.isSelected
 
         override fun addListener(listener: (Boolean) -> Unit) =
             itemProperty.afterChange {
-                listener((it?.isDependentFile == false))
+                listener((it?.isChildFile == false))
             }
     }
 
 
     override fun Panel.createContent() {
         panel {
+            row {
+                isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
+                    .bindSelected(
+                        itemProperty, Item::isChildFile
+                    )
+            }
+
             row(message("builder.settings.name")) {
                 nameTextField = textField()
                     .comment(message("builder.settings.name.legend"))
@@ -58,16 +65,12 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
             }.enabledIf(selectedRowPredicate)
 
             row(message("builder.settings.filePath")) {
-                filePathTextField = textField()
+                filePathTextField = expandableTextField()
                     .comment(message("builder.settings.filePath.legend"))
                     .bindText(itemProperty, Item::filePath)
-            }
-
-            row {
-                isDependentFileCheckBox = checkBox(message("builder.settings.isDependentFile"))
-                    .bindSelected(
-                        itemProperty, Item::isDependentFile
-                    )
+                    .applyToComponent {
+                        columns = 35
+                    }
             }
 
             row(message("builder.settings.template")) {}
@@ -81,12 +84,9 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
                         font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.CONSOLE_PLAIN)
                     }
                     .bindText(itemProperty, Item::template)
-
             }.resizableRow()
-        }
-            .enabledIf(selectedRowPredicate)
+        }.enabledIf(selectedRowPredicate)
     }
-
 }
 
 

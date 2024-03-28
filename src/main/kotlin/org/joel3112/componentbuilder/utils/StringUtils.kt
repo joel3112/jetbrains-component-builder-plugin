@@ -34,10 +34,8 @@ class StringUtils {
             return regexSpecialChars.containsMatchIn(value)
         }
 
-        fun getContentByComponentName(content: String?, values: Map<String, String>): String {
-            return content!!
-                .replace("${"$"}componentPathname${"$"}", values["componentPathname"]!!)
-                .replace("${"$"}componentName${"$"}", values["componentName"]!!)
+        fun replaceVariables(content: String, value: String): String {
+            return content.replace("${"$"}cname${"$"}", value)
         }
     }
 }
