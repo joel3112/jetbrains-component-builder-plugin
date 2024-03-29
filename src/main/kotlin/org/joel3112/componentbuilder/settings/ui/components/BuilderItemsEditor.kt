@@ -1,6 +1,6 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.icons.AllIcons
+import com.intellij.icons.AllIcons.FileTypes
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -31,7 +31,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
     private lateinit var filePathTextField: Cell<JBTextField>
     private lateinit var templateTextarea: Cell<JBTextArea>
 
-    private val allIconsList = AllIcons.FileTypes::class.java.fields.map { it.name }.toList()
+    private val allIconsList = FileTypes::class.java.fields.map { it.name }
 
     private val selectedRowPredicate = object : ComponentPredicate() {
         override fun invoke() = itemProperty.isNotNull().get()
@@ -51,7 +51,11 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
     }
 
     init {
-        itemProperty.afterChange { iconComboBox.component.selectedIndex = -1 }
+        itemProperty.afterChange {
+            if (it?.icon!!.isEmpty()) {
+                iconComboBox.component.selectedIndex = -1
+            }
+        }
     }
 
     override fun Panel.createContent() {
@@ -80,7 +84,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
 
                         renderer = listCellRenderer { label, _, _ ->
                             text = label
-                            icon = AllIcons.FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
+                            icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
                         }
                     }.bindItem(itemProperty, Item::icon)
                 }
