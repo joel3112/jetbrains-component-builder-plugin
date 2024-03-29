@@ -61,47 +61,60 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
                     .bindSelected(
                         itemProperty, Item::isChildFile
                     )
+            }.bottomGap(BottomGap.NONE)
+
+            group(message("builder.settings.group.display")) {
+                row {
+                    comment(message("builder.settings.group.display.description"))
+                }
+
+                row(message("builder.settings.name")) {
+                    nameTextField = textField()
+                        .focused()
+                        .bindText(itemProperty, Item::name)
+                }.enabledIf(selectedRowPredicate)
+
+                row(message("builder.settings.icon")) {
+                    iconComboBox = comboBox(allIconsList).applyToComponent {
+                        selectedIndex = -1
+
+                        renderer = listCellRenderer { label, _, _ ->
+                            text = label
+                            icon = AllIcons.FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
+                        }
+                    }.bindItem(itemProperty, Item::icon)
+                }
             }
 
-            row(message("builder.settings.name")) {
-                nameTextField = textField()
-                    .comment(message("builder.settings.name.legend"))
-                    .focused()
-                    .bindText(itemProperty, Item::name)
-            }.enabledIf(selectedRowPredicate)
+            group(message("builder.settings.group.file")) {
+                row {
+                    comment(message("builder.settings.group.file.description"))
+                }
 
-            row(message("builder.settings.icon")) {
-                iconComboBox = comboBox(allIconsList).applyToComponent {
-                    selectedIndex = -1
+                row(message("builder.settings.filePath")) {
+                    filePathTextField = expandableTextField()
+                        .comment(message("builder.settings.filePath.legend"))
+                        .bindText(itemProperty, Item::filePath)
+                        .applyToComponent {
+                            columns = 35
+                        }
+                }
 
-                    renderer = listCellRenderer { label, _, _ ->
-                        text = label
-                        icon = AllIcons.FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
-                    }
-                }.bindItem(itemProperty, Item::icon)
+                row(message("builder.settings.template")) {}
+                row {
+                    templateTextarea = textArea()
+                        .align(Align.FILL)
+                        .verticalAlign(VerticalAlign.FILL)
+                        .comment(message("builder.settings.template.legend"))
+                        .applyToComponent {
+                            preferredSize = Dimension(0, 200)
+                            font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.CONSOLE_PLAIN)
+                        }
+                        .bindText(itemProperty, Item::template)
+                }.resizableRow()
             }
 
-            row(message("builder.settings.filePath")) {
-                filePathTextField = expandableTextField()
-                    .comment(message("builder.settings.filePath.legend"))
-                    .bindText(itemProperty, Item::filePath)
-                    .applyToComponent {
-                        columns = 35
-                    }
-            }
 
-            row(message("builder.settings.template")) {}
-            row {
-                templateTextarea = textArea()
-                    .align(Align.FILL)
-                    .verticalAlign(VerticalAlign.FILL)
-                    .comment(message("builder.settings.template.legend"))
-                    .applyToComponent {
-                        preferredSize = Dimension(0, 200)
-                        font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.CONSOLE_PLAIN)
-                    }
-                    .bindText(itemProperty, Item::template)
-            }.resizableRow()
         }.enabledIf(selectedRowPredicate)
     }
 }

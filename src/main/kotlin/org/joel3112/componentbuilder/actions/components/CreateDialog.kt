@@ -13,7 +13,7 @@ import org.joel3112.componentbuilder.settings.data.Item
 import javax.swing.JComponent
 
 
-class CreateDialog(private val project: Project, val item: Item) : DialogWrapper(project) {
+open class CreateDialog(project: Project, val item: Item) : DialogWrapper(project) {
     var isCanceled = false
         protected set
 

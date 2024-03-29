@@ -38,7 +38,7 @@ class StringUtils {
             if (content.isEmpty()) {
                 return value
             }
-            return content.replace("${"$"}cname${"$"}", value)
+            return content.replace("${"{"}cname${"}"}", value)
         }
     }
 }
