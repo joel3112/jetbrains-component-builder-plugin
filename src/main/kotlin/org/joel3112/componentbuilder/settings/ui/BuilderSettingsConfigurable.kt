@@ -8,16 +8,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.util.preferredWidth
+import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.SettingsState
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsTable
-import java.awt.Dimension
 import javax.swing.JComponent
 
-class BuilderSettingsConfigurable(private val project: Project) : SearchableConfigurable {
+class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
     private val settingsService = project.service<SettingsService>()
     private val propertyGraph = PropertyGraph()
@@ -50,7 +51,7 @@ class BuilderSettingsConfigurable(private val project: Project) : SearchableConf
             cell(itemsTable.component)
                 .align(Align.FILL)
                 .applyToComponent {
-                    preferredSize = Dimension(200, 0)
+                    preferredWidth = JBUI.scale(185)
                 }
 
             cell(itemsEditor.createPanel())
@@ -81,7 +82,6 @@ class BuilderSettingsConfigurable(private val project: Project) : SearchableConf
         settingsPanel.apply()
         if (updated) {
             settingsService.copyFrom(settingsProperty.get())
-
         }
     }
 

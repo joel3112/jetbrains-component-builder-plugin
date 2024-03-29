@@ -12,12 +12,11 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.listCellRenderer
+import com.intellij.ui.util.preferredHeight
+import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
-import java.awt.Dimension
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
 
@@ -66,15 +65,13 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
 
                 row(message("builder.settings.name")) {
                     nameTextField = textField()
-                        .focused()
                         .bindText(itemProperty, Item::name)
-                }.enabledIf(selectedRowPredicate)
+                }
 
                 row(message("builder.settings.icon")) {
                     iconComboBox = comboBox(allIconsList).applyToComponent {
                         selectedIndex = -1
-
-                        renderer = listCellRenderer { label, _, _ ->
+                        renderer = listCellRenderer { label ->
                             text = label
                             icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
                         }
@@ -89,25 +86,23 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
 
                 row(message("builder.settings.filePath")) {
                     filePathTextField = expandableTextField()
-                        .comment(message("builder.settings.filePath.legend"), 70)
+                        .comment(message("builder.settings.filePath.legend"), 50)
+                        .columns(COLUMNS_LARGE)
                         .bindText(itemProperty, Item::filePath)
-                        .applyToComponent {
-                            columns = 35
-                        }
                 }
 
                 row(message("builder.settings.template")) {}
                 row {
                     templateTextarea = textArea()
                         .align(Align.FILL)
-                        .verticalAlign(VerticalAlign.FILL)
                         .comment(message("builder.settings.template.legend"))
                         .applyToComponent {
-                            preferredSize = Dimension(0, 200)
+                            preferredHeight = JBUI.scale(200)
                             font = EditorColorsManager.getInstance().globalScheme.getFont(EditorFontType.CONSOLE_PLAIN)
                         }
+                        .resizableColumn()
                         .bindText(itemProperty, Item::template)
-                }.resizableRow()
+                }
             }
         }.enabledIf(selectedRowPredicate)
     }

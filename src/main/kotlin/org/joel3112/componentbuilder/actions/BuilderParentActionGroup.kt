@@ -34,6 +34,6 @@ class BuilderParentActionGroup : DefaultActionGroup() {
             e.presentation.isVisible = false
         }
 
-        e.presentation.isEnabled = getItems(e).isNotEmpty() ?: false
+        e.presentation.isEnabled = getItems(e).isNotEmpty()
     }
 }

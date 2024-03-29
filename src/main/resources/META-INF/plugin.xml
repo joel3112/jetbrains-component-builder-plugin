@@ -41,6 +41,5 @@
             <add-to-group group-id="NewGroup" anchor="first"/>
             <separator/>
         </group>
-
     </actions>
 </idea-plugin>
