@@ -16,7 +16,7 @@
                 bundle="messages.BuilderBundle"
                 key="builder.settings.title"/>
 
-        <notificationGroup id="Component Builder plugin"
+        <notificationGroup id="ComponentBuilder"
                            displayType="BALLOON" />
     </extensions>
 

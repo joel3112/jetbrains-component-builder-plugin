@@ -41,18 +41,10 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
                 listener(it != null)
             }
     }
-    private val checkedIsDependentFilePredicate = object : ComponentPredicate() {
-        override fun invoke() = isChildFileCheckBox.component.isSelected
-
-        override fun addListener(listener: (Boolean) -> Unit) =
-            itemProperty.afterChange {
-                listener((it?.isChildFile == false))
-            }
-    }
 
     init {
         itemProperty.afterChange {
-            if (it?.icon!!.isEmpty()) {
+            if (it != null && it.icon.isEmpty()) {
                 iconComboBox.component.selectedIndex = -1
             }
         }
@@ -117,8 +109,6 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
                         .bindText(itemProperty, Item::template)
                 }.resizableRow()
             }
-
-
         }.enabledIf(selectedRowPredicate)
     }
 }

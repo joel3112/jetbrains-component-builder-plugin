@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 class NotificationUtils {
     companion object {
         private val notificationGroup = NotificationGroupManager.getInstance()
-            .getNotificationGroup("Component Builder plugin")
+            .getNotificationGroup("ComponentBuilder")
 
         fun notifyError(message: String, project: Project) {
             notificationGroup
