@@ -93,7 +93,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>) :
 
                 row(message("builder.settings.filePath")) {
                     filePathTextField = expandableTextField()
-                        .comment(message("builder.settings.filePath.legend"))
+                        .comment(message("builder.settings.filePath.legend"), 70)
                         .bindText(itemProperty, Item::filePath)
                         .applyToComponent {
                             columns = 35
