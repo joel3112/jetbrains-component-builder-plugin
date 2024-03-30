@@ -41,9 +41,6 @@ class BuilderItemsTable(private val settingsProperty: ObservableMutableProperty<
         itemsProperty.afterChange {
             refreshValues()
         }
-        if (itemsProperty.get().isNotEmpty()) {
-            tableView.selection = listOf(itemsProperty.get().first())
-        }
     }
 
     override fun createToolbarDecorator() = ToolbarDecorator
