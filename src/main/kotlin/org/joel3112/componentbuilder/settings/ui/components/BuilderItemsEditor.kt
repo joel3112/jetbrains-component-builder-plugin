@@ -68,13 +68,15 @@ class BuilderItemsEditor(val itemProperty: GraphProperty<Item?>, project: Projec
                 }
 
                 row(message("builder.settings.icon")) {
-                    iconComboBox = comboBox(allIconsList).applyToComponent {
-                        selectedIndex = -1
-                        renderer = listCellRenderer { label ->
-                            text = label
-                            icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
+                    iconComboBox = comboBox(allIconsList)
+                        .bindItem(itemProperty, Item::icon)
+                        .applyToComponent {
+                            selectedIndex = -1
+                            renderer = listCellRenderer { label ->
+                                text = label
+                                icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
+                            }
                         }
-                    }.bindItem(itemProperty, Item::icon)
                 }
             }
 
@@ -90,16 +92,15 @@ class BuilderItemsEditor(val itemProperty: GraphProperty<Item?>, project: Projec
                         .bindText(itemProperty, Item::filePath)
                 }
 
-                row(message("builder.settings.template")) {}
                 row {
                     cell(templateEditor)
+                        .label(message("builder.settings.template"), LabelPosition.TOP)
+                        .bindText(itemProperty, Item::template)
                         .align(Align.FILL)
-                        .comment(message("builder.settings.template.legend"))
+                        .resizableColumn()
                         .applyToComponent {
                             preferredHeight = JBUI.scale(200)
                         }
-                        .resizableColumn()
-                        .bindText(itemProperty, Item::template)
                 }
             }
         }.enabledIf(selectedRowPredicate)
