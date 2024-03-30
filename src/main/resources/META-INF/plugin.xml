@@ -10,7 +10,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <projectConfigurable
-                groupId="settings"
+                groupId="other"
                 instance="org.joel3112.componentbuilder.settings.ui.BuilderSettingsConfigurable"
                 id="ReactBuilderConfigurable"
                 bundle="messages.BuilderBundle"

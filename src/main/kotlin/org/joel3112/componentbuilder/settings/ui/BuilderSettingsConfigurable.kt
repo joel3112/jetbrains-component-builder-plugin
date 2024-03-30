@@ -39,7 +39,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         }
 
     private val itemsTable = BuilderItemsTable(settingsProperty)
-    private val itemsEditor = BuilderItemsEditor(itemProperty)
+    private val itemsEditor = BuilderItemsEditor(itemProperty, project)
 
 
     private val settingsPanel = panel {
@@ -51,7 +51,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
             cell(itemsTable.component)
                 .align(Align.FILL)
                 .applyToComponent {
-                    preferredWidth = JBUI.scale(185)
+                    preferredWidth = JBUI.scale(200)
                 }
 
             cell(itemsEditor.createPanel())
