@@ -52,6 +52,8 @@ class BuilderItemsEditor(val itemProperty: GraphProperty<Item?>, project: Projec
         panel {
             row {
                 isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
+                    .comment(message("builder.settings.isChildFile.legend"), 50)
+
                     .bindSelected(
                         itemProperty, Item::isChildFile
                     )
@@ -62,13 +64,13 @@ class BuilderItemsEditor(val itemProperty: GraphProperty<Item?>, project: Projec
                     comment(message("builder.settings.group.display.description"))
                 }
 
-                row(message("builder.settings.name")) {
+                row {
                     nameTextField = textField()
+                        .label(message("builder.settings.name"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::name)
-                }
 
-                row(message("builder.settings.icon")) {
                     iconComboBox = comboBox(allIconsList)
+                        .label(message("builder.settings.icon"), LabelPosition.TOP)
                         .bindItem(itemProperty, Item::icon)
                         .applyToComponent {
                             selectedIndex = -1
@@ -96,8 +98,7 @@ class BuilderItemsEditor(val itemProperty: GraphProperty<Item?>, project: Projec
                     cell(templateEditor)
                         .label(message("builder.settings.template"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::template)
-                        .align(Align.FILL)
-                        .resizableColumn()
+                        .align(AlignX.FILL)
                         .applyToComponent {
                             preferredHeight = JBUI.scale(200)
                         }
