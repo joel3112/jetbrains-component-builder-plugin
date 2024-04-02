@@ -5,9 +5,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import javax.swing.JComponent
@@ -24,9 +24,9 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
     private val createPanel = panel {
         row(message("builder.popup.create.name.label")) {
             textField = textField()
-                .horizontalAlign(HorizontalAlign.FILL)
+                .align(AlignX.FILL)
                 .focused()
-                .validation {
+                .validationInfo {
                     if (it.text.isEmpty()) {
                         ValidationInfo(message("builder.popup.create.name.validation.empty"))
                     } else if (!it.text.matches(nameRegex)) {
