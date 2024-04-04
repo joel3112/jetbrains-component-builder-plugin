@@ -62,9 +62,9 @@ class BuilderEditor(private val project: Project) : JTextArea() {
         return editor.apply {
             document.addDocumentListener(TextChangeListener())
 
-            syncEditorColors()
             setBorder(JBUI.Borders.empty())
             setCaretVisible(true)
+            syncEditorColors()
             scrollPane.horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED
             scrollPane.verticalScrollBarPolicy = ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED
 
