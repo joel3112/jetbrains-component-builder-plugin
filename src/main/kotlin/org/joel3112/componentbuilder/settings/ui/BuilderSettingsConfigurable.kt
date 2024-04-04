@@ -59,10 +59,14 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 .align(Align.FILL)
 
             with(itemsTable.tableView) {
-                itemProperty.set(itemProperty.get() ?: itemsTable.tableView.selectedObject)
                 selectionModel.addListSelectionListener {
                     itemProperty.set(selectedObject)
                 }
+
+                val items = settingsProperty.get().items
+                val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
+                itemsTable.tableView.selection = listOf(firstSelected)
+
             }
         }
     }
