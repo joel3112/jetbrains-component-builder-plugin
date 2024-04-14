@@ -15,18 +15,20 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
+import javax.swing.JTextArea
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
 
 
-class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, project: Project) :
+class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val project: Project) :
     UiDslUnnamedConfigurable.Simple() {
 
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
+    private lateinit var parentExtensionsTextField: Cell<JBTextField>
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var iconComboBox: Cell<ComboBox<String>>
     private lateinit var filePathTextField: Cell<JBTextField>
-    private val templateEditor = BuilderEditor(project)
+    private lateinit var templateTextArea: Cell<JTextArea>
 
     private val allIconsList = FileTypes::class.java.fields.map { it.name }
 
@@ -39,6 +41,16 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
             }
     }
 
+    private val isChildFilePredicate = object : ComponentPredicate() {
+        override fun invoke() = itemProperty.get()?.isChildFile ?: false
+
+        override fun addListener(listener: (Boolean) -> Unit) =
+            itemProperty.afterChange {
+                listener(it?.isChildFile ?: false)
+            }
+    }
+
+
     init {
         itemProperty.afterChange {
             if (it != null && it.icon.isEmpty()) {
@@ -50,13 +62,31 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
     override fun Panel.createContent() {
         panel {
             row {
-                isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
-                    .comment(message("builder.settings.isChildFile.legend"), 50)
+                panel {
+                    row {
+                        isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
+                            .bindSelected(itemProperty, Item::isChildFile)
+                            .applyToComponent {
+                                addActionListener {
+                                    if (!isSelected) {
+                                        parentExtensionsTextField.component.text = ""
+                                    }
+                                }
+                            }.gap(RightGap.COLUMNS)
 
-                    .bindSelected(
-                        itemProperty, Item::isChildFile
-                    )
-            }.bottomGap(BottomGap.NONE)
+                        parentExtensionsTextField = expandableTextField()
+                            .label(message("builder.settings.parentExtensions"), LabelPosition.LEFT)
+                            .columns(COLUMNS_SHORT)
+                            .bindText(itemProperty, Item::parentExtensions)
+                            .enabledIf(isChildFilePredicate)
+                    }.bottomGap(BottomGap.NONE)
+
+                    row {
+                        comment(message("builder.settings.isChildFile.legend"), 60)
+                    }
+                }
+            }
+                .bottomGap(BottomGap.SMALL)
 
             group(message("builder.settings.group.display")) {
                 row {
@@ -94,7 +124,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, pro
                 }
 
                 row {
-                    cell(templateEditor)
+                    templateTextArea = cell(BuilderEditor(project))
                         .label(message("builder.settings.template"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
