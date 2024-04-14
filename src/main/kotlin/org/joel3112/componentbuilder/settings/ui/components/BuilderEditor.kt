@@ -16,7 +16,7 @@ import java.awt.BorderLayout
 import javax.swing.JTextArea
 import javax.swing.ScrollPaneConstants
 
-class BuilderEditor(private val project: Project) : JTextArea() {
+class BuilderEditor(val project: Project) : JTextArea() {
     private val editor: EditorEx = createEditor()
 
     init {

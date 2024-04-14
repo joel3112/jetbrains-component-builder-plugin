@@ -13,7 +13,12 @@ class BuilderChildActionGroup : DefaultActionGroup() {
 
     private fun getItems(e: AnActionEvent?): MutableList<Item> {
         val settingsService = e?.project?.service<SettingsService>()
-        return settingsService?.items?.filter { it.isChildFile }?.toMutableList() ?: mutableListOf()
+        val selectedLocation: VirtualFile? = e?.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
+        val selectedExtension: String = selectedLocation?.extension ?: ""
+
+        return settingsService?.items?.filter {
+            it.isChildFile && selectedExtension in it.parentExtensions
+        }?.toMutableList() ?: mutableListOf()
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
