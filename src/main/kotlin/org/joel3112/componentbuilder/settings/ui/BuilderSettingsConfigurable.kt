@@ -14,9 +14,10 @@ import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.SettingsState
+import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
-import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsTable
 import javax.swing.JComponent
+import javax.swing.tree.DefaultMutableTreeNode
 
 class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
@@ -32,13 +33,13 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         .apply {
             afterChange {
                 ApplicationManager.getApplication().invokeLater {
-                    itemsTable.tableView.updateUI()
+                    itemsTree.updateUI()
                 }
                 settingsProperty.setValue(null, SettingsState::items, settingsProperty.get())
             }
         }
 
-    private val itemsTable = BuilderItemsTable(settingsProperty)
+    private val itemsTree = BuilderItemTree(settingsProperty)
     private val itemsEditor = BuilderItemsEditor(itemProperty, project)
 
 
@@ -48,7 +49,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         }.bottomGap(BottomGap.SMALL)
 
         row {
-            cell(itemsTable.component)
+            cell(itemsTree.component)
                 .align(Align.FILL)
                 .applyToComponent {
                     preferredWidth = JBUI.scale(200)
@@ -58,15 +59,22 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 .applyIfEnabled()
                 .align(Align.FILL)
 
-            with(itemsTable.tableView) {
-                selectionModel.addListSelectionListener {
-                    itemProperty.set(selectedObject)
+            with(itemsTree) {
+                addTreeSelectionListener {
+                    if (lastSelectedPathComponent != null) {
+                        val node = lastSelectedPathComponent as DefaultMutableTreeNode
+                        val selectedObject = node.userObject
+                        if (selectedObject is Item) {
+                            itemProperty.set(selectedObject)
+                        }
+                    }
                 }
-
                 val items = settingsProperty.get().items
                 val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
-                itemsTable.tableView.selection = listOf(firstSelected)
-
+                if (firstSelected != null) {
+                    itemProperty.set(firstSelected)
+                    setSelectionRow(0)
+                }
             }
         }
     }
