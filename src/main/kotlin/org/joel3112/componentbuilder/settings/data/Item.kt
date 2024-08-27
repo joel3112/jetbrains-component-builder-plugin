@@ -25,4 +25,3 @@ data class Item(
     @get:OptionTag("TEMPLATE")
     var template: String = ""
 )
-
