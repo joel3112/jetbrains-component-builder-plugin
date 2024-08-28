@@ -1,7 +1,7 @@
 package org.joel3112.componentbuilder.settings.ui
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
@@ -13,7 +13,6 @@ import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import org.joel3112.componentbuilder.settings.data.SettingsState
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
 import javax.swing.JComponent
@@ -22,25 +21,29 @@ import javax.swing.tree.DefaultMutableTreeNode
 class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
     private val settingsService = project.service<SettingsService>()
+
     private val propertyGraph = PropertyGraph()
-    private val settingsProperty = propertyGraph.lazyProperty {
-        SettingsService().apply {
-            copyFrom(settingsService)
-        }
-    }
-    private val itemProperty = propertyGraph
+    private var itemsProperties: MutableList<GraphProperty<Item>> = settingsService.items.map { item ->
+        propertyGraph.property(item)
+    }.toMutableList()
+    private val selectedItemProperty = propertyGraph
         .lazyProperty<Item?> { null }
         .apply {
-            afterChange {
-                ApplicationManager.getApplication().invokeLater {
-                    itemsTree.updateUI()
+            afterChange { item ->
+//                ApplicationManager.getApplication().invokeLater {
+//                    itemsTree.updateUI()
+//                }
+                if (item != null) {
+                    val index = itemsProperties.indexOfFirst { it.get().id == item.id }
+                    if (index != -1) {
+                        itemsProperties[index].set(item!!)
+                    }
                 }
-                settingsProperty.setValue(null, SettingsState::items, settingsProperty.get())
             }
         }
 
-    private val itemsTree = BuilderItemTree(settingsProperty)
-    private val itemsEditor = BuilderItemsEditor(itemProperty, project)
+    private val itemsTree = BuilderItemTree(project)
+    private val itemsEditor = BuilderItemsEditor(selectedItemProperty, project)
 
 
     private val settingsPanel = panel {
@@ -65,14 +68,15 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                         val node = lastSelectedPathComponent as DefaultMutableTreeNode
                         val selectedObject = node.userObject
                         if (selectedObject is Item) {
-                            itemProperty.set(selectedObject)
+                            selectedItemProperty.set(selectedObject)
                         }
                     }
                 }
-                val items = settingsProperty.get().items
-                val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
+
+                val items = settingsService.items
+                val firstSelected = if (items.size > 0) items.first() else selectedItemProperty.get()
                 if (firstSelected != null) {
-                    itemProperty.set(firstSelected)
+                    selectedItemProperty.set(firstSelected)
                     setSelectionRow(0)
                 }
             }
@@ -81,19 +85,52 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
     override fun createComponent(): JComponent = settingsPanel
 
-    override fun isModified(): Boolean = settingsProperty.get() != settingsService
+    override fun isModified(): Boolean {
+        println("isModified")
+        println("-----> itemsProperties -> ${itemsProperties.size} -> ${itemsProperties[0].get().name} - ${itemsProperties[0].get().template}")
+        println()
+        println("-----> selectedItemProperty -> ${selectedItemProperty.get()!!.name} - ${selectedItemProperty.get()!!.template}")
+        println()
+        println("-----> settingsService.items -> ${settingsService.items.size} -> ${settingsService.items[0].name} - ${settingsService.items[0].template}")
+        println("****************************************")
+
+        return settingsService.items.zip(itemsProperties).any { (originalItem, modifiedProperty) ->
+            originalItem.name != modifiedProperty.get().name ||
+                    originalItem.template != modifiedProperty.get().template ||
+                    originalItem.isChildFile != modifiedProperty.get().isChildFile ||
+                    originalItem.parentExtensions != modifiedProperty.get().parentExtensions ||
+                    originalItem.icon != modifiedProperty.get().icon ||
+                    originalItem.filePath != modifiedProperty.get().filePath
+        }
+    }
 
     override fun reset() {
-        settingsProperty.set(settingsProperty.get().apply {
-            copyFrom(settingsService)
-        })
+        itemsProperties.forEachIndexed { index, itemProperty ->
+            val serviceItem = settingsService.items.getOrNull(index)
+            if (serviceItem != null) {
+                if (selectedItemProperty.get()?.id == serviceItem.id) {
+                    selectedItemProperty.set(serviceItem)
+                }
+                itemProperty.set(serviceItem.copy())
+            } else {
+                itemProperty.set(Item())
+            }
+        }
+
+        println("reset")
+        println("-----> itemsProperties -> ${itemsProperties.size} -> ${itemsProperties[0].get().name} - ${itemsProperties[0].get().template}")
+        println()
+        println("-----> selectedItemProperty -> ${selectedItemProperty.get()!!.name} - ${selectedItemProperty.get()!!.template}")
+        println()
+        println("-----> settingsService.items -> ${settingsService.items.size} -> ${settingsService.items[0].name} - ${settingsService.items[0].template}")
+        println("****************************************")
     }
 
     override fun apply() {
         val updated = isModified
         settingsPanel.apply()
         if (updated) {
-            settingsService.copyFrom(settingsProperty.get())
+            settingsService.items = itemsProperties.map { it.get().copy() }.toMutableList()
         }
     }
 

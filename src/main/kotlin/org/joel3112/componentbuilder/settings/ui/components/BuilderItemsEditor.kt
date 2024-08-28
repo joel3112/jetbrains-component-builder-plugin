@@ -1,9 +1,9 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons.FileTypes
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
+import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.util.isNotNull
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -15,12 +15,12 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
-import javax.swing.JTextArea
-import javax.swing.text.JTextComponent
-import kotlin.reflect.KMutableProperty1
 
 
-class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val project: Project) :
+class BuilderItemsEditor(
+    val itemProperty: GraphProperty<Item?>,
+    val project: Project
+) :
     UiDslUnnamedConfigurable.Simple() {
 
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
@@ -28,7 +28,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var iconComboBox: Cell<ComboBox<String>>
     private lateinit var filePathTextField: Cell<JBTextField>
-    private lateinit var templateTextArea: Cell<JTextArea>
+    private lateinit var templateBuilderEditor: Cell<BuilderEditor>
 
     private val allIconsList = FileTypes::class.java.fields.map { it.name }
 
@@ -50,14 +50,58 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
             }
     }
 
+    private val propertyGraph = PropertyGraph()
+    private val isChildFileProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+    private val parentExtensionsProperty: GraphProperty<String> = propertyGraph.property("")
+    private val nameProperty: GraphProperty<String> = propertyGraph.property("")
+    private val iconProperty: GraphProperty<String> = propertyGraph.property("")
+    private val filePathProperty: GraphProperty<String> = propertyGraph.property("")
+    private val templateProperty: GraphProperty<String> = propertyGraph.property("")
 
     init {
-        itemProperty.afterChange {
-            if (it != null && it.icon.isEmpty()) {
-                iconComboBox.component.selectedIndex = -1
+        itemProperty.afterChange { item ->
+            if (item != null) {
+                isChildFileCheckBox.component.isSelected = item.isChildFile
+                parentExtensionsTextField.component.text = item.parentExtensions
+                nameTextField.component.text = item.name
+                iconComboBox.component.selectedIndex = allIconsList.indexOf(item.icon)
+                filePathTextField.component.text = item.filePath
+                templateBuilderEditor.component.setText(item.template)
             }
         }
+
+        isChildFileProperty.afterChange { isChildFile ->
+            itemProperty.set(
+                itemProperty.get()?.copy(isChildFile = isChildFile)
+            )
+        }
+        parentExtensionsProperty.afterChange { newParentExtensions ->
+            itemProperty.set(
+                itemProperty.get()?.copy(parentExtensions = newParentExtensions)
+            )
+        }
+        nameProperty.afterChange { newName ->
+            itemProperty.set(
+                itemProperty.get()?.copy(name = newName)
+            )
+        }
+        iconProperty.afterChange { newIcon ->
+            itemProperty.set(
+                itemProperty.get()?.copy(icon = newIcon)
+            )
+        }
+        filePathProperty.afterChange { newFilePath ->
+            itemProperty.set(
+                itemProperty.get()?.copy(filePath = newFilePath)
+            )
+        }
+        templateProperty.afterChange { newTemplate ->
+            itemProperty.set(
+                itemProperty.get()?.copy(template = newTemplate)
+            )
+        }
     }
+
 
     override fun Panel.createContent() {
         panel {
@@ -65,7 +109,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                 panel {
                     row {
                         isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
-                            .bindSelected(itemProperty, Item::isChildFile)
+                            .bindSelected(isChildFileProperty)
                             .applyToComponent {
                                 addActionListener {
                                     if (!isSelected) {
@@ -77,7 +121,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                         parentExtensionsTextField = expandableTextField()
                             .label(message("builder.settings.parentExtensions"), LabelPosition.LEFT)
                             .columns(COLUMNS_SHORT)
-                            .bindText(itemProperty, Item::parentExtensions)
+                            .bindText(parentExtensionsProperty)
                             .enabledIf(isChildFilePredicate)
                     }.bottomGap(BottomGap.NONE)
 
@@ -96,11 +140,11 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                 row {
                     nameTextField = textField()
                         .label(message("builder.settings.name"), LabelPosition.TOP)
-                        .bindText(itemProperty, Item::name)
+                        .bindText(nameProperty)
 
                     iconComboBox = comboBox(allIconsList)
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
-                        .bindItem(itemProperty, Item::icon)
+                        .bindItem(iconProperty)
                         .applyToComponent {
                             selectedIndex = -1
                             renderer = listCellRenderer { label ->
@@ -120,13 +164,12 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                     filePathTextField = expandableTextField()
                         .comment(message("builder.settings.filePath.legend"), 50)
                         .columns(COLUMNS_LARGE)
-                        .bindText(itemProperty, Item::filePath)
+                        .bindText(filePathProperty)
                 }
 
                 row {
-                    templateTextArea = cell(BuilderEditor(project))
+                    templateBuilderEditor = cell(BuilderEditor(project, templateProperty))
                         .label(message("builder.settings.template"), LabelPosition.TOP)
-                        .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
                         .applyToComponent {
                             preferredHeight = JBUI.scale(200)
@@ -136,40 +179,3 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
         }.enabledIf(selectedRowPredicate)
     }
 }
-
-
-private fun <T : JTextComponent> Cell<T>.bindText(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, String>
-) =
-    bindText(with(graphProperty) {
-        transform(
-            { it?.let(property::get).orEmpty() },
-            { value -> get()?.apply { property.set(this, value) } },
-        )
-    })
-
-private fun <T : JBCheckBox> Cell<T>.bindSelected(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, Boolean>
-) =
-    bindSelected(with(graphProperty) {
-        transform(
-            { it?.let(property::get) ?: false },
-            { value -> get()?.apply { property.set(this, value) } },
-        )
-    })
-
-private fun <T : ComboBox<String>> Cell<T>.bindItem(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, String>
-) =
-    bindItem(with(graphProperty) {
-        transform(
-            { it?.let(property::get) ?: "" },
-            { value -> get()?.apply { property.set(this, value) } },
-        )
-    })
-
-
-
