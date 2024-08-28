@@ -1,34 +1,47 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
-import javax.swing.JTextArea
+import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-class BuilderEditor(val project: Project) : JTextArea() {
+class BuilderEditor(val project: Project, val textProperty: GraphProperty<String>) : JPanel() {
     private val editor: EditorEx = createEditor()
 
     init {
         layout = BorderLayout()
         add(editor.component)
+
+        WriteAction.run<Throwable> {
+            editor.document.setText(textProperty.get())
+        }
+
+        // Listen to changes in textProperty to update the editor content
+//        textProperty.afterChange { newValue ->
+//            WriteAction.run<Throwable> {
+//                if (newValue != editor.document.text) {
+//                    editor.document.setText(newValue)
+//                }
+//            }
+//        }
     }
 
-    override fun setText(value: String) {
-        super.setText(value)
-        runWriteAction {
-            if (editor.document.text != value) {
-                editor.document.setText(value)
+    fun setText(text: String) {
+        WriteAction.run<Throwable> {
+            if (editor.document.text != text) {
+                editor.document.setText(text)
             }
         }
     }
@@ -36,7 +49,7 @@ class BuilderEditor(val project: Project) : JTextArea() {
     private inner class TextChangeListener : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
             val currentText = event.document.text
-            text = currentText
+            textProperty.set(currentText)
         }
     }
 
@@ -54,7 +67,7 @@ class BuilderEditor(val project: Project) : JTextArea() {
 
     private fun createEditor(): EditorEx {
         val editorFactory = EditorFactory.getInstance()
-        val document = (editorFactory as EditorFactoryImpl).createDocument(text)
+        val document = (editorFactory as EditorFactoryImpl).createDocument("")
         val editor = editorFactory.createEditor(document) as EditorEx
 
         Disposer.register(project) { EditorFactory.getInstance().releaseEditor(editor) }
