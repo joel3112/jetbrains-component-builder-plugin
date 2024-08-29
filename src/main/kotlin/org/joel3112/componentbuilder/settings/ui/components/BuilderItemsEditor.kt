@@ -1,6 +1,7 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons.FileTypes
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.transform
@@ -20,7 +21,10 @@ import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
 
 
-class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val project: Project) :
+class BuilderItemsEditor(
+    val itemProperty: GraphProperty<Item?>,
+    val project: Project
+) :
     UiDslUnnamedConfigurable.Simple() {
 
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
@@ -145,7 +149,12 @@ private fun <T : JTextComponent> Cell<T>.bindText(
     bindText(with(graphProperty) {
         transform(
             { it?.let(property::get).orEmpty() },
-            { value -> get()?.apply { property.set(this, value) } },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
         )
     })
 
@@ -156,7 +165,12 @@ private fun <T : JBCheckBox> Cell<T>.bindSelected(
     bindSelected(with(graphProperty) {
         transform(
             { it?.let(property::get) ?: false },
-            { value -> get()?.apply { property.set(this, value) } },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
         )
     })
 
@@ -167,7 +181,12 @@ private fun <T : ComboBox<String>> Cell<T>.bindItem(
     bindItem(with(graphProperty) {
         transform(
             { it?.let(property::get) ?: "" },
-            { value -> get()?.apply { property.set(this, value) } },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
         )
     })
 
