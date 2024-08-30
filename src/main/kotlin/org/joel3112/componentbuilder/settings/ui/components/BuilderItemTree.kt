@@ -1,21 +1,18 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.AnActionButton
-import com.intellij.ui.AnActionButtonRunnable
-import com.intellij.ui.AnActionButtonUpdater
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.treeStructure.Tree
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import org.joel3112.componentbuilder.utils.TreeUtils
 import java.awt.Component
-import java.util.stream.Stream
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTree
 import javax.swing.tree.*
 
@@ -85,17 +82,12 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
 
     val component: JComponent
         get() {
-            myDecorator
-                .setAddAction(createAddAction())
-                .setRemoveAction(createRemoveAction())
-
             if (!isUpDownSupported()) {
                 myDecorator.disableUpDownActions()
             }
 
             myDecorator.addExtraActions(*createExtraActions())
             val myPanel = myDecorator.createPanel()
-            configureToolbarButtons(myPanel)
             return myPanel
         }
 
@@ -113,41 +105,66 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         setCellRenderer(treeCellRenderer)
     }
 
-    private fun configureToolbarButtons(panel: JPanel) {
-        val addButton = ToolbarDecorator.findAddButton(panel)
-        val removeButton = ToolbarDecorator.findRemoveButton(panel)
-        val editButton = ToolbarDecorator.findEditButton(panel)
-        val upButton = ToolbarDecorator.findUpButton(panel)
-        val downButton = ToolbarDecorator.findDownButton(panel)
-
-        Stream.of<AnActionButton?>(addButton, removeButton, editButton, upButton, downButton)
-            .filter { it: AnActionButton? -> it != null }
-            .forEach { it: AnActionButton? ->
-                it!!.addCustomUpdater(AnActionButtonUpdater { true })
-            }
-    }
-
-
     private fun createToolbarDecorator(): ToolbarDecorator {
         return ToolbarDecorator
             .createDecorator(this, null)
             .setToolbarPosition(ActionToolbarPosition.TOP)
     }
 
+    protected fun createExtraActions(): Array<ActionGroup> {
+        val buttons: ActionGroup = DefaultActionGroup().apply {
+            val addButton: AnActionButton =
+                object : AnActionButton("Add File Type", AllIcons.Actions.AddFile) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        addNewNode()
+                    }
 
-    private fun createRemoveAction(): AnActionButtonRunnable {
-        return AnActionButtonRunnable { button -> removeSelectedNode() }
-    }
+                    override fun isEnabled(): Boolean = true
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
 
-    private fun createAddAction(): AnActionButtonRunnable {
-        return AnActionButtonRunnable { button -> addNewNode() }
-    }
+            val addChildButton: AnActionButton =
+                object : AnActionButton("Add Child File Type", AllIcons.Actions.AddFile) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        addNewChildNode()
+                    }
 
-    protected fun createExtraActions(): Array<AnActionButton> {
-        return arrayOf()
+                    override fun isEnabled(): Boolean =  lastSelectedPathComponent != null
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
+
+            val removeButton: AnActionButton =
+                object : AnActionButton("Remove", AllIcons.General.Remove) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        removeSelectedNode()
+                    }
+
+                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
+
+            val addActions = mutableListOf<AnAction>().apply {
+                add(addButton)
+                add(addChildButton)
+            }
+            add(
+                TreeUtils.actionsPopup(
+                    title = "Add",
+                    icon = AllIcons.General.Add,
+                    actions = addActions
+                )
+            )
+            add(removeButton)
+        }
+        return arrayOf(buttons)
     }
 
     private fun isUpDownSupported() = false
+
+
+    private fun addNewChildNode() {
+
+    }
 
     private fun addNewNode() {
         val newItem = Item()
@@ -205,24 +222,6 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     }
 
     fun syncNodes() {
-
-//        settingsProperty.get().items.forEach { item ->
-//            refreshNode(item)
-//        }
-//
-//        if (settingsProperty.get().items.size != treeItems.size) {
-//            val settingsItemIds = settingsProperty.get().items.map { it.id }.toSet()
-//            val nodesToRemove = treeItems
-//                .filter { it.id !in settingsItemIds }
-//                .map { findNode(it) }
-//            nodesToRemove.forEach { node ->
-//                val parent = node?.parent as DefaultMutableTreeNode
-//                parent.remove(node)
-//            }
-//            selectNodeOrLastNode(null)
-//        }
-
-        // remove all nodes that are not in settings and add new nodes
         println("1. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
         root.removeAllChildren()
         println("2. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
@@ -239,10 +238,6 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         ApplicationManager.getApplication().invokeLater {
             updateUI()
         }
-//        selectNodeOrLastNode(null)
-//        println("2. treeItems:${treeItems.size} - node:${(lastSelectedPathComponent as DefaultMutableTreeNode)?.userObject}")
-
-//        println("refreshNodes = settingsProperty:${settingsProperty.get().items.size} - treeItems:${treeItems.size}")
     }
 }
 
