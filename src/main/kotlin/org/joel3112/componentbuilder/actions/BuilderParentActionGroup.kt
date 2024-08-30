@@ -12,16 +12,14 @@ import org.joel3112.componentbuilder.settings.data.SettingsService
 class BuilderParentActionGroup : DefaultActionGroup() {
     private fun getItems(e: AnActionEvent?): MutableList<Item> {
         val settingsService = e?.project?.service<SettingsService>()
-        return settingsService?.items?.filter { !it.isChildFile }?.toMutableList() ?: mutableListOf()
+        return settingsService?.getParentItems()?.toMutableList() ?: mutableListOf()
     }
 
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val actionGroupItems = mutableListOf<AnAction>()
         getItems(e).forEach { item ->
-            if (!item.isChildFile) {
-                actionGroupItems.add(BuilderAction(item))
-            }
+            actionGroupItems.add(BuilderAction(item))
         }
 
         return actionGroupItems.toTypedArray()

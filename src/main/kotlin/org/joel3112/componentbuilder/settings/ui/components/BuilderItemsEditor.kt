@@ -1,6 +1,6 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.icons.AllIcons.FileTypes
+import com.intellij.icons.ExpUiIcons.FileTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull

@@ -1,6 +1,6 @@
 package org.joel3112.componentbuilder.actions
 
-import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -15,7 +15,7 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
     init {
         templatePresentation.text = item.name
         if (item.icon.isNotEmpty()) {
-            templatePresentation.icon = AllIcons.FileTypes::class.java.getField(item.icon).get(null) as javax.swing.Icon
+            templatePresentation.icon = ExpUiIcons.FileTypes::class.java.getField(item.icon).get(null) as javax.swing.Icon
         }
     }
 
@@ -57,7 +57,7 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        if (item.isChildFile) {
+        if (item.parent.isNotEmpty()) {
             actionPerformedForChildFile(e)
             return
         }

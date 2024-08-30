@@ -48,7 +48,7 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
             font = font.deriveFont(java.awt.Font.PLAIN)
             icon = if (item.icon.isNotEmpty()) {
                 item.icon.let {
-                    AllIcons.FileTypes::class.java.getField(it).get(null)
+                    ExpUiIcons.FileTypes::class.java.getField(it).get(null)
                 } as javax.swing.Icon
             } else {
                 ExpUiIcons.FileTypes.AnyType
