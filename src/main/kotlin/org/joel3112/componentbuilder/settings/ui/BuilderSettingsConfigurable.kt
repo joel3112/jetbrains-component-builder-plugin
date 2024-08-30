@@ -89,12 +89,6 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
     override fun createComponent(): JComponent = settingsPanel
 
     override fun isModified(): Boolean {
-//        println("isModified")
-//        println("--> itemProperty: ${itemProperty.get()?.name} - ${itemProperty.get()?.template}")
-//        println("--> settingsProperty: ${settingsProperty.get().items.map { it.name to it.template }}")
-//        println("--> settingsService: ${settingsService.items.map { it.name to it.template }}")
-//        println("====================================================================")
-
         return settingsProperty.get() != settingsService
     }
 

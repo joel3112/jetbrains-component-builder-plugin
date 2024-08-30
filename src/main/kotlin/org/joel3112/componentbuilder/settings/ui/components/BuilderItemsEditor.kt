@@ -46,11 +46,11 @@ class BuilderItemsEditor(
     }
 
     private val isChildFilePredicate = object : ComponentPredicate() {
-        override fun invoke() = itemProperty.get()?.isChildFile ?: false
+        override fun invoke() = itemProperty.get()?.parent?.isNotEmpty() ?: false
 
         override fun addListener(listener: (Boolean) -> Unit) =
             itemProperty.afterChange {
-                listener(it?.isChildFile ?: false)
+                listener(it?.parent?.isNotEmpty() ?: false)
             }
     }
 
@@ -68,28 +68,11 @@ class BuilderItemsEditor(
             row {
                 panel {
                     row {
-                        isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
-                            .bindSelected(itemProperty, Item::isChildFile)
-                            .applyToComponent {
-                                addActionListener {
-                                    if (!isSelected) {
-                                        parentExtensionsTextField.component.text = ""
-                                    }
-                                }
-                            }.gap(RightGap.COLUMNS)
-
-                        parentExtensionsTextField = expandableTextField()
-                            .label(message("builder.settings.parentExtensions"), LabelPosition.LEFT)
-                            .columns(COLUMNS_SHORT)
-                            .bindText(itemProperty, Item::parentExtensions)
-                            .enabledIf(isChildFilePredicate)
-                    }.bottomGap(BottomGap.NONE)
-
-                    row {
                         comment(message("builder.settings.isChildFile.legend"), 60)
                     }
                 }
             }
+                .visibleIf(isChildFilePredicate)
                 .bottomGap(BottomGap.SMALL)
 
             group(message("builder.settings.group.display")) {

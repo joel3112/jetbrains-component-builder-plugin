@@ -7,11 +7,8 @@ data class Item(
     @get:OptionTag("ID")
     var id: String = UUID.randomUUID().toString(),
 
-    @get:OptionTag("IS_CHILD_FILE")
-    var isChildFile: Boolean = false,
-
-    @get:OptionTag("PARENT_EXTENSIONS")
-    var parentExtensions: String = "",
+    @get:OptionTag("PARENT")
+    var parent: String = "",
 
     @get:OptionTag("NAME")
     var name: String = "Unnamed",

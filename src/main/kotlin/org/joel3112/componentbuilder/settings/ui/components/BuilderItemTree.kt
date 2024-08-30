@@ -1,6 +1,7 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -38,17 +39,19 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
             val isNodeParent = node.parent?.toString() == ROOT_NAME
 
             text = item.name
-//            if (isNodeParent) {
-//                font = font.deriveFont(java.awt.Font.BOLD)
-//                icon = AllIcons.Nodes.Folder
-//                return this
-//            }
+            if (isNodeParent) {
+                font = font.deriveFont(java.awt.Font.BOLD)
+                icon = ExpUiIcons.General.ListFiles
+                return this
+            }
 
             font = font.deriveFont(java.awt.Font.PLAIN)
-            if (item.icon.isNotEmpty()) {
-                icon = item.icon.let {
+            icon = if (item.icon.isNotEmpty()) {
+                item.icon.let {
                     AllIcons.FileTypes::class.java.getField(it).get(null)
                 } as javax.swing.Icon
+            } else {
+                ExpUiIcons.FileTypes.AnyType
             }
         }
         return this
@@ -129,7 +132,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
                         addNewChildNode()
                     }
 
-                    override fun isEnabled(): Boolean =  lastSelectedPathComponent != null
+                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
                 }
 
@@ -163,6 +166,17 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
 
 
     private fun addNewChildNode() {
+        val selectedNode = lastSelectedPathComponent as DefaultMutableTreeNode
+        val parent = selectedNode.parent as DefaultMutableTreeNode
+        val parentId = if ((parent.userObject is Item)) {
+            (parent.userObject as Item).id
+        } else {
+            (selectedNode.userObject as Item).id
+        }
+        val newItem = Item(parent = parentId)
+        itemsProperty.get().add(newItem)
+        syncNodes()
+        selectNodeOrLastNode(findNode(newItem))
 
     }
 
@@ -170,15 +184,20 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         val newItem = Item()
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNodeOrLastNode(null)
+        selectNodeOrLastNode(findNode(newItem))
     }
 
     private fun removeSelectedNode() {
         val selectedNode = lastSelectedPathComponent as DefaultMutableTreeNode
-        val parent = selectedNode.parent as DefaultMutableTreeNode
-        parent.remove(selectedNode)
+        val item = selectedNode.userObject
+        if (item is Item) {
+            itemsProperty.get().remove(item)
 
-        itemsProperty.set(treeItems)
+            val children = itemsProperty.get().filter { it.parent == item.id }
+            children.forEach { childNode ->
+                itemsProperty.get().remove(childNode)
+            }
+        }
         syncNodes()
         selectNodeOrLastNode(null)
     }
@@ -198,6 +217,20 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         if (lastNode != null) {
             selectionPath = TreePath(lastNode.path)
         }
+    }
+
+    private fun expandAllNodes(node: TreeNode, path: TreePath) {
+        for (i in 0 until node.childCount) {
+            val childNode = node.getChildAt(i)
+            val childPath = path.pathByAddingChild(childNode)
+            expandPath(childPath)
+            expandAllNodes(childNode, childPath)
+        }
+    }
+
+    private fun expandAllNodes() {
+        val root = model.root as DefaultMutableTreeNode
+        expandAllNodes(root, TreePath(root))
     }
 
     private fun findNode(item: Item): DefaultMutableTreeNode? {
@@ -222,20 +255,22 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     }
 
     fun syncNodes() {
-        println("1. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
         root.removeAllChildren()
-        println("2. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
 
-
-        settingsProperty.get().items.forEach { item ->
+        val parentItems = settingsProperty.get().items.filter { it.parent.isEmpty() }
+        parentItems.forEach { item ->
             val node = DefaultMutableTreeNode(item)
             root.add(node)
+
+            val childrenItems = settingsProperty.get().items.filter { it.parent == item.id }
+            childrenItems.forEach { childItem ->
+                val childNode = DefaultMutableTreeNode(childItem)
+                node.add(childNode)
+            }
         }
-        println("3. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
-
-        println("**********************************************************************")
-
+        (model as DefaultTreeModel).reload()
         ApplicationManager.getApplication().invokeLater {
+            expandAllNodes()
             updateUI()
         }
     }
