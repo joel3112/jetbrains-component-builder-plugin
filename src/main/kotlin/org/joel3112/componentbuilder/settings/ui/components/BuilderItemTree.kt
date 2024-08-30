@@ -2,6 +2,7 @@ package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.AnActionButton
@@ -40,11 +41,11 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
             val isNodeParent = node.parent?.toString() == ROOT_NAME
 
             text = item.name
-            if (isNodeParent) {
-                font = font.deriveFont(java.awt.Font.BOLD)
-                icon = AllIcons.Nodes.Folder
-                return this
-            }
+//            if (isNodeParent) {
+//                font = font.deriveFont(java.awt.Font.BOLD)
+//                icon = AllIcons.Nodes.Folder
+//                return this
+//            }
 
             font = font.deriveFont(java.awt.Font.PLAIN)
             if (item.icon.isNotEmpty()) {
@@ -102,7 +103,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         myDecorator = createToolbarDecorator()
 
         val treeCellRenderer = ItemTreeCellRenderer()
-        createNodes(itemsProperty.get())
+        syncNodes()
 
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         isEditable = false
@@ -148,19 +149,11 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
 
     private fun isUpDownSupported() = false
 
-    private fun createNodes(items: MutableList<Item>) {
-        items.forEach { item ->
-            val node = DefaultMutableTreeNode(item)
-            root.add(node)
-        }
-    }
-
     private fun addNewNode() {
-        val root = model.root as DefaultMutableTreeNode
-        val node = DefaultMutableTreeNode(Item())
-        root.add(node)
-        itemsProperty.set(treeItems)
-        selectNodeOrLastNode(node)
+        val newItem = Item()
+        itemsProperty.get().add(newItem)
+        syncNodes()
+        selectNodeOrLastNode(null)
     }
 
     private fun removeSelectedNode() {
@@ -169,15 +162,22 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         parent.remove(selectedNode)
 
         itemsProperty.set(treeItems)
+        syncNodes()
         selectNodeOrLastNode(null)
     }
 
-    private fun selectNodeOrLastNode(node: DefaultMutableTreeNode?) {
+    fun selectNodeOrLastNode(node: DefaultMutableTreeNode?) {
         if (node != null) {
             selectionPath = TreePath(node.path)
             return
         }
-        val lastNode = root.children().toList().lastOrNull() as DefaultMutableTreeNode?
+
+        if (treeItems.isEmpty()) {
+            clearSelection()
+            return
+        }
+
+        val lastNode = findNode(treeItems.last())
         if (lastNode != null) {
             selectionPath = TreePath(lastNode.path)
         }
@@ -196,34 +196,53 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
             }
     }
 
-    private fun refreshNode(item: Item) {
+    fun refreshNode(item: Item) {
         val node = findNode(item)
-        if (node != null) {
+        if (node != null && node.userObject != item) {
             node.userObject = item
             (model as DefaultTreeModel).nodeChanged(node)
         }
     }
 
     fun syncNodes() {
-        updateUI()
-        println("refreshNodes = settingsProperty:${settingsProperty.get().items.size} - treeItems:${treeItems.size}")
 
-        if (settingsProperty.get().items.size != treeItems.size) {
-            val settingsItemIds = settingsProperty.get().items.map { it.id }.toSet()
-            val nodesToRemove = treeItems
-                .filter { it.id !in settingsItemIds }
-                .map { findNode(it) }
-            nodesToRemove.forEach { node ->
-                val parent = node?.parent as DefaultMutableTreeNode
-                parent.remove(node)
-            }
-            selectNodeOrLastNode(null)
-            return
-        }
+//        settingsProperty.get().items.forEach { item ->
+//            refreshNode(item)
+//        }
+//
+//        if (settingsProperty.get().items.size != treeItems.size) {
+//            val settingsItemIds = settingsProperty.get().items.map { it.id }.toSet()
+//            val nodesToRemove = treeItems
+//                .filter { it.id !in settingsItemIds }
+//                .map { findNode(it) }
+//            nodesToRemove.forEach { node ->
+//                val parent = node?.parent as DefaultMutableTreeNode
+//                parent.remove(node)
+//            }
+//            selectNodeOrLastNode(null)
+//        }
+
+        // remove all nodes that are not in settings and add new nodes
+        println("1. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
+        root.removeAllChildren()
+        println("2. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
+
 
         settingsProperty.get().items.forEach { item ->
-            refreshNode(item)
+            val node = DefaultMutableTreeNode(item)
+            root.add(node)
         }
+        println("3. treeItems:${settingsProperty.get().items.size} - ${treeItems.size}")
+
+        println("**********************************************************************")
+
+        ApplicationManager.getApplication().invokeLater {
+            updateUI()
+        }
+//        selectNodeOrLastNode(null)
+//        println("2. treeItems:${treeItems.size} - node:${(lastSelectedPathComponent as DefaultMutableTreeNode)?.userObject}")
+
+//        println("refreshNodes = settingsProperty:${settingsProperty.get().items.size} - treeItems:${treeItems.size}")
     }
 }
 
