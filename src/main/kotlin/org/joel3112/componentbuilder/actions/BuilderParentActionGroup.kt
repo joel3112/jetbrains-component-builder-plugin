@@ -1,9 +1,6 @@
 package org.joel3112.componentbuilder.actions
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.settings.data.Item
@@ -33,5 +30,9 @@ class BuilderParentActionGroup : DefaultActionGroup() {
         }
 
         e.presentation.isEnabled = getItems(e).isNotEmpty()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
     }
 }
