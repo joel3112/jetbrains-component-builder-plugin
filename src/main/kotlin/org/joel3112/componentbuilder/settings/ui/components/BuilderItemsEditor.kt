@@ -16,10 +16,8 @@ import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.IconUtils
-import javax.swing.JTextArea
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
-
 
 class BuilderItemsEditor(
     val itemProperty: GraphProperty<Item?>,
@@ -32,7 +30,7 @@ class BuilderItemsEditor(
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var iconFileDescription: Cell<BuilderIconDescription>
     private lateinit var filePathTextField: Cell<JBTextField>
-    private lateinit var templateEditor: Cell<JTextArea>
+    private lateinit var templateEditor: Cell<BuilderEditor>
 
     private val allIconsList = IconUtils.getIconList()
 
@@ -92,6 +90,7 @@ class BuilderItemsEditor(
 
                     iconFileDescription = cell(BuilderIconDescription())
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
+                        .visibleIf(selectedRowPredicate)
                 }
             }
 
