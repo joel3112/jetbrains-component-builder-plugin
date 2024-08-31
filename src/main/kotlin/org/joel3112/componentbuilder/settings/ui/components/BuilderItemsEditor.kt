@@ -6,7 +6,6 @@ import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
@@ -31,9 +30,9 @@ class BuilderItemsEditor(
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
     private lateinit var parentExtensionsTextField: Cell<JBTextField>
     private lateinit var nameTextField: Cell<JBTextField>
-    private lateinit var iconComboBox: Cell<ComboBox<String>>
+    private lateinit var iconFileDescription: Cell<BuilderIconDescription>
     private lateinit var filePathTextField: Cell<JBTextField>
-    private lateinit var templateTextArea: Cell<JTextArea>
+    private lateinit var templateEditor: Cell<JTextArea>
 
     private val allIconsList = IconUtils.getIconList()
 
@@ -54,6 +53,20 @@ class BuilderItemsEditor(
                 listener(it?.parent?.isNotEmpty() ?: false)
             }
     }
+
+    init {
+        itemProperty.afterChange {
+            if (it != null) {
+                val extension = FileUtils.getExtension(it.filePath)
+                val isParent = !isChildFilePredicate.invoke()
+                val fileType = IconUtils.getIconValueByExtension(extension, isParent)
+
+                iconFileDescription.component.icon = IconUtils.getIconByValue(fileType)
+                iconFileDescription.component.text = fileType
+            }
+        }
+    }
+
 
     override fun Panel.createContent() {
         panel {
@@ -77,16 +90,8 @@ class BuilderItemsEditor(
                         .label(message("builder.settings.name"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::name)
 
-                    iconComboBox = comboBox(allIconsList)
+                    iconFileDescription = cell(BuilderIconDescription())
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
-                        .enabled(false)
-                        .applyToComponent {
-                            selectedIndex = -1
-                            renderer = listCellRenderer { label ->
-                                text = label
-                                icon = IconUtils.getIconByValue(label)
-                            }
-                        }
                 }
             }
 
@@ -100,17 +105,10 @@ class BuilderItemsEditor(
                         .comment(message("builder.settings.filePath.legend"), 50)
                         .columns(COLUMNS_LARGE)
                         .bindText(itemProperty, Item::filePath)
-                        .onChanged {
-                            val extension = FileUtils.getExtension(it.text)
-                            iconComboBox.component.selectedItem = IconUtils.getIconValueByExtension(
-                                extension,
-                                itemProperty.get()?.parent?.isNotEmpty() ?: false
-                            )
-                        }
                 }
 
                 row {
-                    templateTextArea = cell(BuilderEditor(project))
+                    templateEditor = cell(BuilderEditor(project))
                         .label(message("builder.settings.template"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
