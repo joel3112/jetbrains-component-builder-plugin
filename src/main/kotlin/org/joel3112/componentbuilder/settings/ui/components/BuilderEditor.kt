@@ -33,6 +33,12 @@ class BuilderEditor(val project: Project) : JTextArea() {
         }
     }
 
+    override fun setEnabled(enabled: Boolean) {
+        super.setEnabled(enabled)
+        editor.isViewer = !enabled
+        editor.setCaretEnabled(enabled)
+    }
+
     private inner class TextChangeListener : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
             val currentText = event.document.text

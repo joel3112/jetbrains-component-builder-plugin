@@ -18,4 +18,12 @@ class SettingsService : SettingsState, BaseState(), PersistentStateComponent<Set
     override fun loadState(state: SettingsService) {
         copyFrom(state)
     }
+
+    fun getParentItems(): List<Item> {
+        return items.filter { it.parent.isEmpty() }
+    }
+
+    fun getChildrenByItem(item: Item): List<Item> {
+        return items.filter { it.parent == item.id }
+    }
 }

@@ -1,12 +1,11 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.icons.AllIcons.FileTypes
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
 import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
@@ -15,22 +14,25 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
-import javax.swing.JTextArea
+import org.joel3112.componentbuilder.utils.FileUtils
+import org.joel3112.componentbuilder.utils.IconUtils
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
 
-
-class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val project: Project) :
+class BuilderItemsEditor(
+    val itemProperty: GraphProperty<Item?>,
+    val project: Project
+) :
     UiDslUnnamedConfigurable.Simple() {
 
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
     private lateinit var parentExtensionsTextField: Cell<JBTextField>
     private lateinit var nameTextField: Cell<JBTextField>
-    private lateinit var iconComboBox: Cell<ComboBox<String>>
+    private lateinit var iconFileDescription: Cell<BuilderIconDescription>
     private lateinit var filePathTextField: Cell<JBTextField>
-    private lateinit var templateTextArea: Cell<JTextArea>
+    private lateinit var templateEditor: Cell<BuilderEditor>
 
-    private val allIconsList = FileTypes::class.java.fields.map { it.name }
+    private val allIconsList = IconUtils.getIconList()
 
     private val selectedRowPredicate = object : ComponentPredicate() {
         override fun invoke() = itemProperty.isNotNull().get()
@@ -42,50 +44,38 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
     }
 
     private val isChildFilePredicate = object : ComponentPredicate() {
-        override fun invoke() = itemProperty.get()?.isChildFile ?: false
+        override fun invoke() = itemProperty.get()?.parent?.isNotEmpty() ?: false
 
         override fun addListener(listener: (Boolean) -> Unit) =
             itemProperty.afterChange {
-                listener(it?.isChildFile ?: false)
+                listener(it?.parent?.isNotEmpty() ?: false)
             }
     }
-
 
     init {
         itemProperty.afterChange {
-            if (it != null && it.icon.isEmpty()) {
-                iconComboBox.component.selectedIndex = -1
+            if (it != null) {
+                val extension = FileUtils.getExtension(it.filePath)
+                val isParent = !isChildFilePredicate.invoke()
+                val fileType = IconUtils.getIconValueByExtension(extension, isParent)
+
+                iconFileDescription.component.icon = IconUtils.getIconByValue(fileType)
+                iconFileDescription.component.text = fileType
             }
         }
     }
+
 
     override fun Panel.createContent() {
         panel {
             row {
                 panel {
                     row {
-                        isChildFileCheckBox = checkBox(message("builder.settings.isChildFile"))
-                            .bindSelected(itemProperty, Item::isChildFile)
-                            .applyToComponent {
-                                addActionListener {
-                                    if (!isSelected) {
-                                        parentExtensionsTextField.component.text = ""
-                                    }
-                                }
-                            }.gap(RightGap.COLUMNS)
-
-                        parentExtensionsTextField = expandableTextField()
-                            .label(message("builder.settings.parentExtensions"), LabelPosition.LEFT)
-                            .columns(COLUMNS_SHORT)
-                            .bindText(itemProperty, Item::parentExtensions)
-                            .enabledIf(isChildFilePredicate)
-                    }.bottomGap(BottomGap.NONE)
-
-                    row {
                         comment(message("builder.settings.isChildFile.legend"), 60)
                     }
                 }
             }
+                .visibleIf(isChildFilePredicate)
                 .bottomGap(BottomGap.SMALL)
 
             group(message("builder.settings.group.display")) {
@@ -98,16 +88,9 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                         .label(message("builder.settings.name"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::name)
 
-                    iconComboBox = comboBox(allIconsList)
+                    iconFileDescription = cell(BuilderIconDescription())
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
-                        .bindItem(itemProperty, Item::icon)
-                        .applyToComponent {
-                            selectedIndex = -1
-                            renderer = listCellRenderer { label ->
-                                text = label
-                                icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
-                            }
-                        }
+                        .visibleIf(selectedRowPredicate)
                 }
             }
 
@@ -124,7 +107,7 @@ class BuilderItemsEditor(val itemProperty: ObservableMutableProperty<Item?>, val
                 }
 
                 row {
-                    templateTextArea = cell(BuilderEditor(project))
+                    templateEditor = cell(BuilderEditor(project))
                         .label(message("builder.settings.template"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
@@ -145,7 +128,12 @@ private fun <T : JTextComponent> Cell<T>.bindText(
     bindText(with(graphProperty) {
         transform(
             { it?.let(property::get).orEmpty() },
-            { value -> get()?.apply { property.set(this, value) } },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
         )
     })
 
@@ -156,20 +144,11 @@ private fun <T : JBCheckBox> Cell<T>.bindSelected(
     bindSelected(with(graphProperty) {
         transform(
             { it?.let(property::get) ?: false },
-            { value -> get()?.apply { property.set(this, value) } },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
         )
     })
-
-private fun <T : ComboBox<String>> Cell<T>.bindItem(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, String>
-) =
-    bindItem(with(graphProperty) {
-        transform(
-            { it?.let(property::get) ?: "" },
-            { value -> get()?.apply { property.set(this, value) } },
-        )
-    })
-
-
-

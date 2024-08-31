@@ -23,6 +23,11 @@ class FileUtils {
             val editorManager = FileEditorManager.getInstance(project)
             editorManager.openFile(file, true)
         }
+
+        fun getExtension(filePath: String): String {
+            val fileExtension = File(filePath).extension
+            return fileExtension
+        }
     }
 }
 

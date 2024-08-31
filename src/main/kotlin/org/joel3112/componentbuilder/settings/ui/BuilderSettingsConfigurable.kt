@@ -13,32 +13,38 @@ import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import org.joel3112.componentbuilder.settings.data.SettingsState
+import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
-import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsTable
 import javax.swing.JComponent
+import javax.swing.tree.DefaultMutableTreeNode
 
 class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
     private val settingsService = project.service<SettingsService>()
     private val propertyGraph = PropertyGraph()
+
     private val settingsProperty = propertyGraph.lazyProperty {
         SettingsService().apply {
             copyFrom(settingsService)
         }
     }
-    private val itemProperty = propertyGraph
-        .lazyProperty<Item?> { null }
+    private val itemProperty = propertyGraph.lazyProperty<Item?> { null }
         .apply {
-            afterChange {
+            afterChange { item ->
                 ApplicationManager.getApplication().invokeLater {
-                    itemsTable.tableView.updateUI()
                 }
-                settingsProperty.setValue(null, SettingsState::items, settingsProperty.get())
+                if (item != null) {
+                    settingsProperty.set(
+                        settingsProperty.get().apply {
+                            items = items.map { if (it.id == item.id) item else it }.toMutableList()
+                        }
+                    )
+                    itemsTree.refreshNode(item)
+                }
             }
         }
 
-    private val itemsTable = BuilderItemsTable(settingsProperty)
+    private val itemsTree = BuilderItemTree(settingsProperty)
     private val itemsEditor = BuilderItemsEditor(itemProperty, project)
 
 
@@ -48,7 +54,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         }.bottomGap(BottomGap.SMALL)
 
         row {
-            cell(itemsTable.component)
+            cell(itemsTree.component)
                 .align(Align.FILL)
                 .applyToComponent {
                     preferredWidth = JBUI.scale(200)
@@ -58,27 +64,48 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 .applyIfEnabled()
                 .align(Align.FILL)
 
-            with(itemsTable.tableView) {
-                selectionModel.addListSelectionListener {
-                    itemProperty.set(selectedObject)
+            with(itemsTree) {
+                addTreeSelectionListener {
+                    if (lastSelectedPathComponent != null) {
+                        val node = lastSelectedPathComponent as DefaultMutableTreeNode
+                        val selectedObject = node.userObject
+                        if (selectedObject is Item) {
+                            itemProperty.set(selectedObject)
+                        }
+                    } else {
+                        itemProperty.set(null)
+                    }
                 }
-
                 val items = settingsProperty.get().items
                 val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
-                itemsTable.tableView.selection = listOf(firstSelected)
-
+                if (firstSelected != null) {
+                    itemProperty.set(firstSelected)
+                    setSelectionRow(0)
+                }
             }
         }
     }
 
     override fun createComponent(): JComponent = settingsPanel
 
-    override fun isModified(): Boolean = settingsProperty.get() != settingsService
+    override fun isModified(): Boolean {
+        return settingsProperty.get() != settingsService
+    }
 
     override fun reset() {
-        settingsProperty.set(settingsProperty.get().apply {
+        if (!isModified) return
+
+        settingsProperty.set(SettingsService().apply {
             copyFrom(settingsService)
         })
+
+        val items = settingsProperty.get().items
+        itemProperty.set(if (items.isNotEmpty()) items.find { it.id == itemProperty.get()?.id } else null)
+
+        ApplicationManager.getApplication().invokeLater {
+            itemsTree.syncNodes()
+            itemsTree.selectNodeOrLastNode(null)
+        }
     }
 
     override fun apply() {

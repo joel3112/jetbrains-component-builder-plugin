@@ -3,9 +3,6 @@ package org.joel3112.componentbuilder.utils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import net.pearx.kasechange.toCamelCase
-import net.pearx.kasechange.toKebabCase
-import net.pearx.kasechange.toPascalCase
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import java.io.File
@@ -67,15 +64,5 @@ class BuilderCreator(
     }
 }
 
-private fun String.replaceVariables(cname: String): String {
-    if (this.isEmpty()) {
-        return cname
-    }
-    return this
-        .replace("${"$"}NAME${"$"}", cname)
-        .replace("${"$"}KEBAB_NAME${"$"}", cname.toKebabCase())
-        .replace("${"$"}PASCAL_NAME${"$"}", cname.toPascalCase())
-        .replace("${"$"}CAMEL_NAME${"$"}", cname.toCamelCase())
 
-}
 
