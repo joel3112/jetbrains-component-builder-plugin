@@ -13,9 +13,6 @@ data class Item(
     @get:OptionTag("NAME")
     var name: String = "Unnamed",
 
-    @get:OptionTag("ICON")
-    var icon: String = "",
-
     @get:OptionTag("FILE_PATH")
     var filePath: String = "",
 

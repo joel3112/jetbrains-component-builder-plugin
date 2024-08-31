@@ -1,6 +1,5 @@
 package org.joel3112.componentbuilder.actions
 
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -9,14 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.actions.components.CreateDialog
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.BuilderCreator
+import org.joel3112.componentbuilder.utils.FileUtils
+import org.joel3112.componentbuilder.utils.IconUtils
 
 
 class BuilderAction(val item: Item) : DumbAwareAction() {
     init {
         templatePresentation.text = item.name
-        if (item.icon.isNotEmpty()) {
-            templatePresentation.icon = ExpUiIcons.FileTypes::class.java.getField(item.icon).get(null) as javax.swing.Icon
-        }
+
+        val extension = FileUtils.getExtension(item.filePath)
+         templatePresentation.icon = IconUtils.getIconByExtension(extension, item.parent.isEmpty())
     }
 
     private fun getLocation(file: VirtualFile): VirtualFile {

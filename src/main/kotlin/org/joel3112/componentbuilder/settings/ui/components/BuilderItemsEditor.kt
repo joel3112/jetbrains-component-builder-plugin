@@ -1,6 +1,5 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.icons.ExpUiIcons.FileTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
@@ -16,6 +15,8 @@ import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
+import org.joel3112.componentbuilder.utils.FileUtils
+import org.joel3112.componentbuilder.utils.IconUtils
 import javax.swing.JTextArea
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
@@ -34,7 +35,7 @@ class BuilderItemsEditor(
     private lateinit var filePathTextField: Cell<JBTextField>
     private lateinit var templateTextArea: Cell<JTextArea>
 
-    private val allIconsList = FileTypes::class.java.fields.map { it.name }
+    private val allIconsList = IconUtils.getIconList()
 
     private val selectedRowPredicate = object : ComponentPredicate() {
         override fun invoke() = itemProperty.isNotNull().get()
@@ -52,15 +53,6 @@ class BuilderItemsEditor(
             itemProperty.afterChange {
                 listener(it?.parent?.isNotEmpty() ?: false)
             }
-    }
-
-
-    init {
-        itemProperty.afterChange {
-            if (it != null && it.icon.isEmpty()) {
-                iconComboBox.component.selectedIndex = -1
-            }
-        }
     }
 
     override fun Panel.createContent() {
@@ -87,12 +79,12 @@ class BuilderItemsEditor(
 
                     iconComboBox = comboBox(allIconsList)
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
-                        .bindItem(itemProperty, Item::icon)
+                        .enabled(false)
                         .applyToComponent {
                             selectedIndex = -1
                             renderer = listCellRenderer { label ->
                                 text = label
-                                icon = FileTypes::class.java.getField(label).get(null) as javax.swing.Icon
+                                icon = IconUtils.getIconByValue(label)
                             }
                         }
                 }
@@ -108,6 +100,13 @@ class BuilderItemsEditor(
                         .comment(message("builder.settings.filePath.legend"), 50)
                         .columns(COLUMNS_LARGE)
                         .bindText(itemProperty, Item::filePath)
+                        .onChanged {
+                            val extension = FileUtils.getExtension(it.text)
+                            iconComboBox.component.selectedItem = IconUtils.getIconValueByExtension(
+                                extension,
+                                itemProperty.get()?.parent?.isNotEmpty() ?: false
+                            )
+                        }
                 }
 
                 row {
@@ -156,22 +155,3 @@ private fun <T : JBCheckBox> Cell<T>.bindSelected(
             }
         )
     })
-
-private fun <T : ComboBox<String>> Cell<T>.bindItem(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, String>
-) =
-    bindItem(with(graphProperty) {
-        transform(
-            { it?.let(property::get) ?: "" },
-            { value ->
-                get()?.copy()?.apply {
-                    property.set(this, value)
-                    set(this)
-                }
-            }
-        )
-    })
-
-
-

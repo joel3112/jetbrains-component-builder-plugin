@@ -1,7 +1,6 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -11,6 +10,8 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.treeStructure.Tree
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import org.joel3112.componentbuilder.utils.FileUtils
+import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.TreeUtils
 import java.awt.Component
 import javax.swing.JComponent
@@ -37,22 +38,17 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
         if (node.userObject is Item) {
             val item = node.userObject as Item
             val isNodeParent = node.parent?.toString() == ROOT_NAME
+            val extension = FileUtils.getExtension(item.filePath)
 
             text = item.name
             if (isNodeParent) {
                 font = font.deriveFont(java.awt.Font.BOLD)
-                icon = ExpUiIcons.General.ListFiles
+                icon = IconUtils.getIconByExtension(extension, true)
                 return this
             }
 
             font = font.deriveFont(java.awt.Font.PLAIN)
-            icon = if (item.icon.isNotEmpty()) {
-                item.icon.let {
-                    ExpUiIcons.FileTypes::class.java.getField(it).get(null)
-                } as javax.swing.Icon
-            } else {
-                ExpUiIcons.FileTypes.AnyType
-            }
+            icon = IconUtils.getIconByExtension(extension, false)
         }
         return this
     }
