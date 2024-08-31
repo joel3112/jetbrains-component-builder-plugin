@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.AnActionButton
+import com.intellij.ui.JBColor
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.treeStructure.Tree
 import org.joel3112.componentbuilder.settings.data.Item
@@ -13,12 +14,14 @@ import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.TreeUtils
+import java.awt.Color
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.*
 
 private const val ROOT_NAME = "ROOT"
+private val transparentColor = JBColor(Color(0, 0, 0, 0), Color(0, 0, 0, 0))
 
 private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
     override fun getTreeCellRendererComponent(
@@ -44,11 +47,14 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
             if (isNodeParent) {
                 font = font.deriveFont(java.awt.Font.BOLD)
                 icon = IconUtils.getIconByExtension(extension, true)
-                return this
+            } else {
+                font = font.deriveFont(java.awt.Font.PLAIN)
+                icon = IconUtils.getIconByExtension(extension, false)
             }
 
-            font = font.deriveFont(java.awt.Font.PLAIN)
-            icon = IconUtils.getIconByExtension(extension, false)
+            backgroundSelectionColor = transparentColor
+            backgroundNonSelectionColor = transparentColor
+            borderSelectionColor = transparentColor
         }
         return this
     }
