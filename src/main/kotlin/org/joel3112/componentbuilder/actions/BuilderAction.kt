@@ -8,16 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.actions.components.CreateDialog
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.BuilderCreator
-import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.IconUtils
 
 
 class BuilderAction(val item: Item) : DumbAwareAction() {
     init {
         templatePresentation.text = item.name
-
-        val extension = FileUtils.getExtension(item.filePath)
-         templatePresentation.icon = IconUtils.getIconByExtension(extension, item.parent.isEmpty())
+        templatePresentation.icon = IconUtils.getIconByItem(item).second
     }
 
     private fun getLocation(file: VirtualFile): VirtualFile {
