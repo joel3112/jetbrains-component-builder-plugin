@@ -55,7 +55,7 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        if (item.parent.isNotEmpty()) {
+        if (!item.isParent) {
             actionPerformedForChildFile(e)
             return
         }

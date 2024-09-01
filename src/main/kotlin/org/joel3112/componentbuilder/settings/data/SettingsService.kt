@@ -20,7 +20,7 @@ class SettingsService : SettingsState, BaseState(), PersistentStateComponent<Set
     }
 
     fun getParentItems(): List<Item> {
-        return items.filter { it.parent.isEmpty() }
+        return items.filter { it.isParent }
     }
 
     fun getChildrenByItem(item: Item): List<Item> {
