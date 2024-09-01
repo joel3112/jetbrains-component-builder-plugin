@@ -1,21 +1,14 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
-import com.intellij.icons.ExpUiIcons
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBTextField
-import java.awt.Color
-import java.awt.Dimension
+import com.intellij.util.ui.JBUI
 import java.awt.Graphics
-import java.awt.Graphics2D
+import java.awt.Insets
 import javax.swing.Icon
-import javax.swing.UIManager
-
 
 class BuilderIconDescription : JBTextField() {
-    private val transparentColor = JBColor(Color(255, 255, 255, 0), Color(255, 255, 255, 0))
-    private val treeColor: Color = UIManager.getColor("Tree.background")
-    private var iconSpacing: Int = 0
-    var icon: Icon = ExpUiIcons.FileTypes.AnyType
+
+    var icon: Icon? = null
         set(value) {
             field = value
             revalidate()
@@ -23,60 +16,44 @@ class BuilderIconDescription : JBTextField() {
         }
 
     init {
-        border = null
         isEditable = false
-        background = transparentColor
-        revalidate()
-        repaint()
-    }
-
-    override fun paintComponent(g: Graphics) {
-        super.paintComponent(g)
-
-        val g2d = g.create() as Graphics2D
-        g2d.paint = treeColor
-        g2d.fillRect(0, 0, width, height)
-
-        // Draw the icon
-        val iconWidth = icon.iconWidth
-        val iconHeight = icon.iconHeight
-        val iconX = insets.left
-        val iconY = (height - iconHeight) / 2
-
-        icon.paintIcon(this, g2d, iconX, iconY)
-
-        // Translate graphics context to position text correctly
-        g2d.translate(iconX + iconWidth + iconSpacing, 0)
-
-        // Draw the text
-        super.paintComponent(g2d)
-        g2d.dispose()
-    }
-
-    override fun getPreferredSize(): Dimension {
-        return calculatePreferredSize()
-    }
-
-    override fun getMinimumSize(): Dimension {
-        return calculatePreferredSize()
-    }
-
-    override fun getMaximumSize(): Dimension {
-        return calculatePreferredSize()
-    }
-
-    private fun calculatePreferredSize(): Dimension {
-        val textFieldSize = super.getPreferredSize()
-        val iconWidth = icon.iconWidth
-        val iconHeight = icon.iconHeight
-        val extraWidth = iconWidth + iconSpacing
-        val width = Math.max(textFieldSize.width, extraWidth)
-        val height = Math.max(textFieldSize.height, iconHeight)
-        return Dimension(width + extraWidth, height)
+        isFocusable = false
     }
 
     override fun setText(text: String?) {
         super.setText(text)
         revalidate()
+        repaint()
+    }
+
+
+    override fun getInsets(): Insets {
+        // Get the current insets from the border or default to empty insets
+        val currentInsets: Insets = border?.getBorderInsets(this) ?: JBUI.emptyInsets()
+
+        // Calculate the additional insets required for the icon
+        val iconWidth = icon?.iconWidth ?: 0
+        val iconInsets = if (iconWidth > 0) iconWidth else 0
+
+        // Add the icon insets to the left side of the current insets
+        return JBUI.insets(
+            currentInsets.top,
+            currentInsets.left + iconInsets + 2,
+            currentInsets.bottom,
+            currentInsets.right
+        )
+    }
+
+    override fun paintComponent(g: Graphics) {
+        super.paintComponent(g)
+
+        icon?.let {
+            // Calculate icon position considering the border insets
+            val iconX = (border?.getBorderInsets(this)?.left ?: 0) + 4
+            val iconY = (height - it.iconHeight) / 2 // Center the icon vertically
+
+            // Paint the icon
+            it.paintIcon(this, g, iconX, iconY)
+        }
     }
 }

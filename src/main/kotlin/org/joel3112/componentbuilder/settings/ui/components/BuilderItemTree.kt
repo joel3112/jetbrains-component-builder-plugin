@@ -11,7 +11,6 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.treeStructure.Tree
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.TreeUtils
 import java.awt.Color
@@ -41,16 +40,14 @@ private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
         if (node.userObject is Item) {
             val item = node.userObject as Item
             val isNodeParent = node.parent?.toString() == ROOT_NAME
-            val extension = FileUtils.getExtension(item.filePath)
 
             text = item.name
-            if (isNodeParent) {
-                font = font.deriveFont(java.awt.Font.BOLD)
-                icon = IconUtils.getIconByExtension(extension, true)
+            font = if (isNodeParent) {
+                font.deriveFont(java.awt.Font.BOLD)
             } else {
-                font = font.deriveFont(java.awt.Font.PLAIN)
-                icon = IconUtils.getIconByExtension(extension, false)
+                font.deriveFont(java.awt.Font.PLAIN)
             }
+            icon = IconUtils.getIconByItem(item).second
 
             backgroundSelectionColor = transparentColor
             backgroundNonSelectionColor = transparentColor
@@ -178,7 +175,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         val newItem = Item(parent = parentId)
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNodeOrLastNode(findNode(newItem))
+        selectNode(findNode(newItem))
 
     }
 
@@ -186,7 +183,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         val newItem = Item()
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNodeOrLastNode(findNode(newItem))
+        selectNode(findNode(newItem))
     }
 
     private fun removeSelectedNode() {
@@ -201,24 +198,15 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
             }
         }
         syncNodes()
-        selectNodeOrLastNode(null)
+        selectNode(null)
     }
 
-    fun selectNodeOrLastNode(node: DefaultMutableTreeNode?) {
+    fun selectNode(node: DefaultMutableTreeNode?) {
         if (node != null) {
             selectionPath = TreePath(node.path)
             return
         }
-
-        if (treeItems.isEmpty()) {
-            clearSelection()
-            return
-        }
-
-        val lastNode = findNode(treeItems.last())
-        if (lastNode != null) {
-            selectionPath = TreePath(lastNode.path)
-        }
+        clearSelection()
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {

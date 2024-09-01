@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
+import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -57,7 +57,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
             cell(itemsTree.component)
                 .align(Align.FILL)
                 .applyToComponent {
-                    preferredWidth = JBUI.scale(200)
+                    preferredWidth(JBUI.scale(200))
                 }
 
             cell(itemsEditor.createPanel())
@@ -104,7 +104,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
         ApplicationManager.getApplication().invokeLater {
             itemsTree.syncNodes()
-            itemsTree.selectNodeOrLastNode(null)
+            itemsTree.selectNode(null)
         }
     }
 
