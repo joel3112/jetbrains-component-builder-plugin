@@ -13,6 +13,8 @@ import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import javax.swing.JTextArea
 import javax.swing.ScrollPaneConstants
 
@@ -22,6 +24,14 @@ class BuilderEditor(val project: Project) : JTextArea() {
     init {
         layout = BorderLayout()
         add(editor.component)
+
+        editor.component.isFocusable = true
+        editor.component.isFocusCycleRoot = true
+        addFocusListener(object : FocusAdapter() {
+            override fun focusGained(e: FocusEvent?) {
+                editor.contentComponent.requestFocusInWindow()
+            }
+        })
     }
 
     override fun setText(value: String) {
