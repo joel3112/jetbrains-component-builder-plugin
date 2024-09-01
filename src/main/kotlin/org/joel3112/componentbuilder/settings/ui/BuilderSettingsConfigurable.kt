@@ -79,8 +79,8 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 val items = settingsProperty.get().items
                 val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
                 if (firstSelected != null) {
-                    setSelectionRow(0)
                     itemProperty.set(firstSelected)
+                    setSelectionRow(0)
                 }
             }
         }
@@ -104,7 +104,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
         ApplicationManager.getApplication().invokeLater {
             itemsTree.syncNodes()
-            itemsTree.selectNodeOrLastNode(null)
+            itemsTree.selectNode(null)
         }
     }
 

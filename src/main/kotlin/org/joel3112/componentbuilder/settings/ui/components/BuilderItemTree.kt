@@ -175,7 +175,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         val newItem = Item(parent = parentId)
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNodeOrLastNode(findNode(newItem))
+        selectNode(findNode(newItem))
 
     }
 
@@ -183,7 +183,7 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
         val newItem = Item()
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNodeOrLastNode(findNode(newItem))
+        selectNode(findNode(newItem))
     }
 
     private fun removeSelectedNode() {
@@ -198,24 +198,15 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
             }
         }
         syncNodes()
-        selectNodeOrLastNode(null)
+        selectNode(null)
     }
 
-    fun selectNodeOrLastNode(node: DefaultMutableTreeNode?) {
+    fun selectNode(node: DefaultMutableTreeNode?) {
         if (node != null) {
             selectionPath = TreePath(node.path)
             return
         }
-
-        if (treeItems.isEmpty()) {
-            clearSelection()
-            return
-        }
-
-        val lastNode = findNode(treeItems.last())
-        if (lastNode != null) {
-            selectionPath = TreePath(lastNode.path)
-        }
+        clearSelection()
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
