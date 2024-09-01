@@ -51,7 +51,7 @@ class IconUtils {
                     lafName.contains("Dark", ignoreCase = true)
         }
 
-        private fun generateIcon(iconPath: String): Icon? {
+        private fun generateIcon(iconPath: String): Icon {
             return IconLoader.getIcon(iconPath, this::class.java)
         }
 

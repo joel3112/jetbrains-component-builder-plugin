@@ -1,22 +1,20 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.IconUtils
-import javax.swing.text.JTextComponent
-import kotlin.reflect.KMutableProperty1
+import org.joel3112.componentbuilder.utils.bindText
+import org.joel3112.componentbuilder.utils.preferredHeight
+import org.joel3112.componentbuilder.utils.preferredWidth
 
 class BuilderItemsEditor(
     val itemProperty: GraphProperty<Item?>,
@@ -85,6 +83,9 @@ class BuilderItemsEditor(
                     iconFileDescription = cell(BuilderIconDescription())
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
                         .visibleIf(selectedRowPredicate)
+                        .applyToComponent {
+                            preferredWidth(JBUI.scale(150))
+                        }
                 }
             }
 
@@ -106,7 +107,7 @@ class BuilderItemsEditor(
                         .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
                         .applyToComponent {
-                            preferredHeight = JBUI.scale(200)
+                            preferredHeight(JBUI.scale(200))
                         }
                 }
             }
@@ -114,35 +115,3 @@ class BuilderItemsEditor(
     }
 }
 
-
-private fun <T : JTextComponent> Cell<T>.bindText(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, String>
-) =
-    bindText(with(graphProperty) {
-        transform(
-            { it?.let(property::get).orEmpty() },
-            { value ->
-                get()?.copy()?.apply {
-                    property.set(this, value)
-                    set(this)
-                }
-            }
-        )
-    })
-
-private fun <T : JBCheckBox> Cell<T>.bindSelected(
-    graphProperty: ObservableMutableProperty<Item?>,
-    property: KMutableProperty1<Item, Boolean>
-) =
-    bindSelected(with(graphProperty) {
-        transform(
-            { it?.let(property::get) ?: false },
-            { value ->
-                get()?.copy()?.apply {
-                    property.set(this, value)
-                    set(this)
-                }
-            }
-        )
-    })
