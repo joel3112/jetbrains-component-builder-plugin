@@ -24,6 +24,4 @@ data class Item(
 ) {
     val isParent: Boolean
         get() = parent.isEmpty()
-
 }
-

@@ -71,7 +71,6 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                         val node = lastSelectedPathComponent as CheckedTreeNode
                         val selectedObject = node.userObject
                         if (selectedObject is Item) {
-                            println("Selected item: ${selectedObject.name}")
                             itemProperty.set(selectedObject)
                         }
                     } else {
@@ -82,7 +81,22 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 addCheckboxTreeListener(object : CheckboxTreeListener {
                     override fun nodeStateChanged(node: CheckedTreeNode) {
                         val itemChanged = node.userObject as Item
-                        println("CheckboxTreeListener.nodeStateChanged - ${itemChanged.name} - ${node.isChecked}")
+                        ApplicationManager.getApplication().invokeLater {
+                            settingsProperty.get().apply {
+                                items = items.map {
+                                    // Check the item itself
+                                    if (it.id == itemChanged.id) {
+                                        it.copy(enabled = node.isChecked)
+                                        // Check its children, according to the parent item
+                                    } else if (!it.isParent && it.parent == itemChanged.id) {
+                                        itemsTree.setNodeState(itemsTree.findNode(it)!!, node.isChecked)
+                                        it.copy(enabled = node.isChecked)
+                                    } else {
+                                        it
+                                    }
+                                }.toMutableList()
+                            }
+                        }
                     }
                 })
 
@@ -104,7 +118,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         println("settingsService.items: ${settingsService.items}")
         println("==============================================================")
 
-        return settingsProperty.get() != settingsService
+        return !settingsProperty.get().equalsState(settingsService)
     }
 
     override fun reset() {

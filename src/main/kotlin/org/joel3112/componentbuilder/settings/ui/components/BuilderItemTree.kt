@@ -5,10 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
-import com.intellij.ui.AnActionButton
-import com.intellij.ui.CheckboxTreeBase
-import com.intellij.ui.CheckedTreeNode
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.*
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
@@ -19,8 +16,6 @@ import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
-
-private const val ROOT_NAME = "ROOT"
 
 private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRendererBase(true, false) {
     override fun customizeRenderer(
@@ -35,12 +30,16 @@ private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRender
         val node = value as CheckedTreeNode
         val item = node.userObject as Item
 
-        textRenderer.isEnabled = item.enabled
+        textRenderer.isEnabled = node.isChecked
         textRenderer.icon = IconUtils.getIconByItem(item).second
-        textRenderer.append(item.name)
+        textRenderer.append(
+            item.name,
+            if (node.isParent) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
+        )
     }
 }
 
+private const val ROOT_NAME = "ROOT"
 private var root: CheckedTreeNode = CheckedTreeNode(Item(ROOT_NAME))
 
 class BuilderItemTree(
@@ -143,13 +142,12 @@ class BuilderItemTree(
 
     private fun addNewChildNode() {
         val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val parent = selectedNode.parent as CheckedTreeNode
-        val parentId = if ((parent.userObject is Item)) {
-            (parent.userObject as Item).id
+        val parentNode = selectedNode.parent as CheckedTreeNode
+        val newItem = if (selectedNode.isParent) {
+            Item(parent = (selectedNode.userObject as Item).id, enabled = selectedNode.isChecked)
         } else {
-            (selectedNode.userObject as Item).id
+            Item(parent = (parentNode.userObject as Item).id, enabled = parentNode.isChecked)
         }
-        val newItem = Item(parent = parentId)
         itemsProperty.get().add(newItem)
         syncNodes()
         selectNode(findNode(newItem))
@@ -168,21 +166,15 @@ class BuilderItemTree(
         if (item is Item) {
             itemsProperty.get().remove(item)
 
-            val children = itemsProperty.get().filter { it.parent == item.id }
-            children.forEach { childNode ->
-                itemsProperty.get().remove(childNode)
+            if (item.isParent) {
+                val children = itemsProperty.get().filter { it.parent == item.id }
+                children.forEach { childItem ->
+                    itemsProperty.get().remove(childItem)
+                }
             }
         }
         syncNodes()
         selectNode(null)
-    }
-
-    fun selectNode(node: CheckedTreeNode?) {
-        if (node != null) {
-            selectionPath = TreePath(node.path)
-            return
-        }
-        clearSelection()
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -199,7 +191,15 @@ class BuilderItemTree(
         expandAllNodes(root, TreePath(root))
     }
 
-    private fun findNode(item: Item): CheckedTreeNode? {
+    fun selectNode(node: CheckedTreeNode?) {
+        if (node != null) {
+            selectionPath = TreePath(node.path)
+            return
+        }
+        clearSelection()
+    }
+
+    fun findNode(item: Item): CheckedTreeNode? {
         val rootNode = model.root as CheckedTreeNode
         return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
             .find { node ->
@@ -226,15 +226,14 @@ class BuilderItemTree(
         val parentItems = settingsProperty.get().items.filter { it.isParent }
         parentItems.forEach { item ->
             val node = CheckedTreeNode(item)
-            root.add(node)
             setNodeState(node, item.enabled)
+            root.add(node)
 
             val childrenItems = settingsProperty.get().items.filter { it.parent == item.id }
             childrenItems.forEach { childItem ->
                 val childNode = CheckedTreeNode(childItem)
-                childNode.isChecked = childItem.enabled
-                node.add(childNode)
                 setNodeState(childNode, childItem.enabled)
+                node.add(childNode)
             }
         }
         (model as DefaultTreeModel).reload()
@@ -245,3 +244,21 @@ class BuilderItemTree(
     }
 }
 
+
+private val CheckedTreeNode.isParent: Boolean
+    get() {
+        return parent === root
+    }
+private val CheckedTreeNode.hasParentChecked: Boolean
+    get() {
+        if (isParent) {
+            return isChecked
+        }
+
+        if (parent == null) {
+            return false
+        }
+
+        val parentNode = parent as CheckedTreeNode
+        return parentNode.isChecked
+    }
