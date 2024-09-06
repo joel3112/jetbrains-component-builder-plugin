@@ -9,7 +9,10 @@ import org.joel3112.componentbuilder.settings.data.SettingsService
 class BuilderParentActionGroup : DefaultActionGroup() {
     private fun getItems(e: AnActionEvent?): MutableList<Item> {
         val settingsService = e?.project?.service<SettingsService>()
-        return settingsService?.getParentItems()?.toMutableList() ?: mutableListOf()
+        val enabledItems = settingsService?.getParentItems()?.filter {
+            it.enabled
+        }?.toMutableList()
+        return enabledItems ?: mutableListOf()
     }
 
 

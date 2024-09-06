@@ -15,8 +15,8 @@ class BuilderCreator(
     private val project: Project
 ) : Runnable {
 
-    private val cTemplate = item.template.replaceVariables(cname)
-    private val cFilePath = item.filePath.replaceVariables(cname).replaceFirst("/", "")
+    private val cTemplate = item.templateFormatted(cname)
+    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "")
 
     private val cRelativeFile = File(cFilePath)
     private val cFile = File(

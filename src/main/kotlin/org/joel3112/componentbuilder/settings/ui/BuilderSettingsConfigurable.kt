@@ -81,7 +81,6 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 addCheckboxTreeListener(object : CheckboxTreeListener {
                     override fun nodeStateChanged(node: CheckedTreeNode) {
                         val itemChanged = node.userObject as Item
-                        println("nodeStateChanged >> ${itemChanged.name} - ${node.isChecked}")
 
                         ApplicationManager.getApplication().invokeLater {
                             settingsProperty.get().apply {
