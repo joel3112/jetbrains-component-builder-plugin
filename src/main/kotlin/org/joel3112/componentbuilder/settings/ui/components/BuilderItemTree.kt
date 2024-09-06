@@ -47,7 +47,7 @@ class BuilderItemTree(
 ) : CheckboxTreeBase(
     CheckBoxTreeCellRenderer(),
     root,
-    CheckPolicy(false, false, false, false)
+    CheckPolicy(true, true, true, true)
 ) {
     private var myDecorator: ToolbarDecorator
 
@@ -191,15 +191,7 @@ class BuilderItemTree(
         expandAllNodes(root, TreePath(root))
     }
 
-    fun selectNode(node: CheckedTreeNode?) {
-        if (node != null) {
-            selectionPath = TreePath(node.path)
-            return
-        }
-        clearSelection()
-    }
-
-    fun findNode(item: Item): CheckedTreeNode? {
+    private fun findNode(item: Item): CheckedTreeNode? {
         val rootNode = model.root as CheckedTreeNode
         return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
             .find { node ->
@@ -210,6 +202,14 @@ class BuilderItemTree(
                     false
                 }
             }
+    }
+
+    fun selectNode(node: CheckedTreeNode?) {
+        if (node != null) {
+            selectionPath = TreePath(node.path)
+            return
+        }
+        clearSelection()
     }
 
     fun refreshNode(item: Item) {
@@ -248,17 +248,4 @@ class BuilderItemTree(
 private val CheckedTreeNode.isParent: Boolean
     get() {
         return parent === root
-    }
-private val CheckedTreeNode.hasParentChecked: Boolean
-    get() {
-        if (isParent) {
-            return isChecked
-        }
-
-        if (parent == null) {
-            return false
-        }
-
-        val parentNode = parent as CheckedTreeNode
-        return parentNode.isChecked
     }

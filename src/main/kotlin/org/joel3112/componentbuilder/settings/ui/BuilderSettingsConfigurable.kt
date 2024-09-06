@@ -81,19 +81,12 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 addCheckboxTreeListener(object : CheckboxTreeListener {
                     override fun nodeStateChanged(node: CheckedTreeNode) {
                         val itemChanged = node.userObject as Item
+                        println("nodeStateChanged >> ${itemChanged.name} - ${node.isChecked}")
+
                         ApplicationManager.getApplication().invokeLater {
                             settingsProperty.get().apply {
                                 items = items.map {
-                                    // Check the item itself
-                                    if (it.id == itemChanged.id) {
-                                        it.copy(enabled = node.isChecked)
-                                        // Check its children, according to the parent item
-                                    } else if (!it.isParent && it.parent == itemChanged.id) {
-                                        itemsTree.setNodeState(itemsTree.findNode(it)!!, node.isChecked)
-                                        it.copy(enabled = node.isChecked)
-                                    } else {
-                                        it
-                                    }
+                                    if (it.id == itemChanged.id) it.copy(enabled = node.isChecked) else it
                                 }.toMutableList()
                             }
                         }
@@ -113,11 +106,6 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
     override fun createComponent(): JComponent = settingsPanel
 
     override fun isModified(): Boolean {
-        println("isModified ${settingsProperty.get() != settingsService}")
-        println("settingsProperty.get().items: ${settingsProperty.get().items}")
-        println("settingsService.items: ${settingsService.items}")
-        println("==============================================================")
-
         return !settingsProperty.get().equalsState(settingsService)
     }
 
