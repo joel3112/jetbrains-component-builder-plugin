@@ -5,7 +5,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import org.joel3112.componentbuilder.utils.replaceVariables
 
 class BuilderChildActionGroup : DefaultActionGroup() {
 
@@ -16,11 +15,14 @@ class BuilderChildActionGroup : DefaultActionGroup() {
         val selectedName: String = selectedLocation?.nameWithoutExtension ?: ""
         val selectedPath: String = selectedLocation?.path ?: ""
         val itemMatchFilePathFormatted = settingsService?.items?.find {
-            it.filePath.isNotEmpty() && selectedPath.contains(it.filePath.replaceVariables(selectedName))
+            it.filePath.isNotEmpty() && selectedPath.contains(it.filePathFormatted(selectedName))
         }
 
         if (itemMatchFilePathFormatted != null) {
-            return settingsService.getChildrenByItem(itemMatchFilePathFormatted).toMutableList()
+            val enabledItems = settingsService.getChildrenByItem(itemMatchFilePathFormatted).filter {
+                it.enabled
+            }.toMutableList()
+            return enabledItems
         }
         return mutableListOf()
     }
