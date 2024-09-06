@@ -45,6 +45,5 @@ class TreeUtils {
                 PopupUtil.showForActionButtonEvent(popup, e)
             }
         }
-
     }
 }

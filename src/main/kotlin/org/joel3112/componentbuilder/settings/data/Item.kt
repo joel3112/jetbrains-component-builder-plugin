@@ -7,6 +7,9 @@ data class Item(
     @get:OptionTag("ID")
     var id: String = UUID.randomUUID().toString(),
 
+    @get:OptionTag("ENABLED")
+    var enabled: Boolean = true,
+
     @get:OptionTag("PARENT")
     var parent: String = "",
 
@@ -17,6 +20,8 @@ data class Item(
     var filePath: String = "",
 
     @get:OptionTag("TEMPLATE")
-    var template: String = ""
-)
-
+    var template: String = "",
+) {
+    val isParent: Boolean
+        get() = parent.isEmpty()
+}

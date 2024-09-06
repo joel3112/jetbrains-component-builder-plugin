@@ -5,71 +5,52 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
-import com.intellij.ui.AnActionButton
-import com.intellij.ui.JBColor
-import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.treeStructure.Tree
+import com.intellij.ui.*
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.TreeUtils
-import java.awt.Color
-import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.tree.*
+import javax.swing.tree.DefaultTreeModel
+import javax.swing.tree.TreeNode
+import javax.swing.tree.TreePath
+import javax.swing.tree.TreeSelectionModel
 
-private const val ROOT_NAME = "ROOT"
-private val transparentColor = JBColor(Color(0, 0, 0, 0), Color(0, 0, 0, 0))
-
-private class ItemTreeCellRenderer : DefaultTreeCellRenderer() {
-    override fun getTreeCellRendererComponent(
+private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRendererBase(true, false) {
+    override fun customizeRenderer(
         tree: JTree?,
-        value: Any,
-        sel: Boolean,
+        value: Any?,
+        selected: Boolean,
         expanded: Boolean,
         leaf: Boolean,
         row: Int,
         hasFocus: Boolean
-    ): Component {
-        super.getTreeCellRendererComponent(
-            tree, value, sel, expanded, leaf, row, hasFocus
+    ) {
+        val node = value as CheckedTreeNode
+        val item = node.userObject as Item
+
+        textRenderer.isEnabled = node.isChecked
+        textRenderer.icon = IconUtils.getIconByItem(item).second
+        textRenderer.append(
+            item.name,
+            if (node.isParent) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES else SimpleTextAttributes.REGULAR_ATTRIBUTES
         )
-
-        val node = value as DefaultMutableTreeNode
-        if (node.userObject is Item) {
-            val item = node.userObject as Item
-            val isNodeParent = node.parent?.toString() == ROOT_NAME
-
-            text = item.name
-            font = if (isNodeParent) {
-                font.deriveFont(java.awt.Font.BOLD)
-            } else {
-                font.deriveFont(java.awt.Font.PLAIN)
-            }
-            icon = IconUtils.getIconByItem(item).second
-
-            backgroundSelectionColor = transparentColor
-            backgroundNonSelectionColor = transparentColor
-            borderSelectionColor = transparentColor
-        }
-        return this
     }
 }
 
+private const val ROOT_NAME = "ROOT"
+private var root: CheckedTreeNode = CheckedTreeNode(Item(ROOT_NAME))
 
-class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsService>) : Tree() {
+class BuilderItemTree(
+    private val settingsProperty: GraphProperty<SettingsService>,
+) : CheckboxTreeBase(
+    CheckBoxTreeCellRenderer(),
+    root,
+    CheckPolicy(true, true, true, true)
+) {
     private var myDecorator: ToolbarDecorator
-    private var root: DefaultMutableTreeNode = DefaultMutableTreeNode(ROOT_NAME)
 
-    private val treeItems
-        get(): MutableList<Item> {
-            val rootChildren = root.children().toList().map {
-                it as DefaultMutableTreeNode
-            }
-
-            return rootChildren.map { it.userObject as Item }.toMutableList()
-        }
     private val itemsProperty = settingsProperty.transform(
         { it.items },
         {
@@ -95,16 +76,12 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
 
     init {
         myDecorator = createToolbarDecorator()
-
-        val treeCellRenderer = ItemTreeCellRenderer()
         syncNodes()
 
-        selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
-        isEditable = false
+        selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
         isRootVisible = false
         showsRootHandles = true
         model = DefaultTreeModel(root)
-        setCellRenderer(treeCellRenderer)
     }
 
     private fun createToolbarDecorator(): ToolbarDecorator {
@@ -163,20 +140,17 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
 
     private fun isUpDownSupported() = false
 
-
     private fun addNewChildNode() {
-        val selectedNode = lastSelectedPathComponent as DefaultMutableTreeNode
-        val parent = selectedNode.parent as DefaultMutableTreeNode
-        val parentId = if ((parent.userObject is Item)) {
-            (parent.userObject as Item).id
+        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+        val parentNode = selectedNode.parent as CheckedTreeNode
+        val newItem = if (selectedNode.isParent) {
+            Item(parent = (selectedNode.userObject as Item).id, enabled = selectedNode.isChecked)
         } else {
-            (selectedNode.userObject as Item).id
+            Item(parent = (parentNode.userObject as Item).id, enabled = parentNode.isChecked)
         }
-        val newItem = Item(parent = parentId)
         itemsProperty.get().add(newItem)
         syncNodes()
         selectNode(findNode(newItem))
-
     }
 
     private fun addNewNode() {
@@ -187,26 +161,20 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     }
 
     private fun removeSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as DefaultMutableTreeNode
+        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
         val item = selectedNode.userObject
         if (item is Item) {
             itemsProperty.get().remove(item)
 
-            val children = itemsProperty.get().filter { it.parent == item.id }
-            children.forEach { childNode ->
-                itemsProperty.get().remove(childNode)
+            if (item.isParent) {
+                val children = itemsProperty.get().filter { it.parent == item.id }
+                children.forEach { childItem ->
+                    itemsProperty.get().remove(childItem)
+                }
             }
         }
         syncNodes()
         selectNode(null)
-    }
-
-    fun selectNode(node: DefaultMutableTreeNode?) {
-        if (node != null) {
-            selectionPath = TreePath(node.path)
-            return
-        }
-        clearSelection()
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -219,13 +187,13 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     }
 
     private fun expandAllNodes() {
-        val root = model.root as DefaultMutableTreeNode
+        val root = model.root as CheckedTreeNode
         expandAllNodes(root, TreePath(root))
     }
 
-    private fun findNode(item: Item): DefaultMutableTreeNode? {
-        val rootNode = model.root as DefaultMutableTreeNode
-        return rootNode.breadthFirstEnumeration().asSequence().map { it as DefaultMutableTreeNode }
+    private fun findNode(item: Item): CheckedTreeNode? {
+        val rootNode = model.root as CheckedTreeNode
+        return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
             .find { node ->
                 val selectedObject = node.userObject
                 if (selectedObject is Item) {
@@ -234,6 +202,14 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
                     false
                 }
             }
+    }
+
+    fun selectNode(node: CheckedTreeNode?) {
+        if (node != null) {
+            selectionPath = TreePath(node.path)
+            return
+        }
+        clearSelection()
     }
 
     fun refreshNode(item: Item) {
@@ -247,14 +223,16 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     fun syncNodes() {
         root.removeAllChildren()
 
-        val parentItems = settingsProperty.get().items.filter { it.parent.isEmpty() }
+        val parentItems = settingsProperty.get().items.filter { it.isParent }
         parentItems.forEach { item ->
-            val node = DefaultMutableTreeNode(item)
+            val node = CheckedTreeNode(item)
+            setNodeState(node, item.enabled)
             root.add(node)
 
             val childrenItems = settingsProperty.get().items.filter { it.parent == item.id }
             childrenItems.forEach { childItem ->
-                val childNode = DefaultMutableTreeNode(childItem)
+                val childNode = CheckedTreeNode(childItem)
+                setNodeState(childNode, childItem.enabled)
                 node.add(childNode)
             }
         }
@@ -266,3 +244,8 @@ class BuilderItemTree(private val settingsProperty: GraphProperty<SettingsServic
     }
 }
 
+
+private val CheckedTreeNode.isParent: Boolean
+    get() {
+        return parent === root
+    }

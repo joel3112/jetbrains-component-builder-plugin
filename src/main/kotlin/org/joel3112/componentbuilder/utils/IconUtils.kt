@@ -18,9 +18,9 @@ class IconUtils {
             ".*\\.astro" to FileIcon("Astro", "/icons/files/astro.svg", "/icons/files/astro_dark.svg"),
             ".*\\.css" to FileIcon("Css", "/icons/files/css.svg", "/icons/files/css_dark.svg"),
             ".*\\.html" to FileIcon("Html", "/icons/files/html.svg", "/icons/files/html_dark.svg"),
+            ".*\\.(test|spec)\\.js" to FileIcon("JsTest", "/icons/files/jsTest.svg", "/icons/files/jsTest_dark.svg"),
             ".*\\.js" to FileIcon("JavaScript", "/icons/files/javaScript.svg", "/icons/files/javaScript_dark.svg"),
             ".*\\.json" to FileIcon("Json", "/icons/files/json.svg", "/icons/files/json_dark.svg"),
-            ".*\\.(test|spec)\\.js" to FileIcon("JsTest", "/icons/files/jsTest.svg", "/icons/files/jsTest_dark.svg"),
             ".*\\.md" to FileIcon("Markdown", "/icons/files/markdown.svg", "/icons/files/markdown_dark.svg"),
             ".*\\.mdx" to FileIcon("Mdx", "/icons/files/mdx.svg", "/icons/files/mdx_dark.svg"),
             ".*\\.sass" to FileIcon("Sass", "/icons/files/sass.svg", "/icons/files/sass_dark.svg"),
@@ -32,13 +32,13 @@ class IconUtils {
                 "/icons/files/tsTest.svg",
                 "/icons/files/tsTest_dark.svg"
             ),
-            ".*\\.(jsx|tsx)" to FileIcon("React", "/icons/files/tsx.svg", "/icons/files/tsx_dark.svg"),
+            ".*\\.ts" to FileIcon("TypeScript", "/icons/files/typeScript.svg", "/icons/files/typeScript_dark.svg"),
             ".*\\.(test|spec)\\.(jsx|tsx)" to FileIcon(
                 "ReactTest",
                 "/icons/files/tsxTest.svg",
                 "/icons/files/tsxTest_dark.svg"
             ),
-            ".*\\.ts" to FileIcon("TypeScript", "/icons/files/typeScript.svg", "/icons/files/typeScript_dark.svg"),
+            ".*\\.(jsx|tsx)" to FileIcon("React", "/icons/files/tsx.svg", "/icons/files/tsx_dark.svg"),
             ".*\\.vue" to FileIcon("VueJs", "/icons/files/vue.svg", "/icons/files/vue_dark.svg"),
             ".*\\.xml" to FileIcon("Xml", "/icons/files/xml.svg", "/icons/files/xml_dark.svg"),
             ".*\\.yaml" to FileIcon("Yaml", "/icons/files/yaml.svg", "/icons/files/yaml_dark.svg"),

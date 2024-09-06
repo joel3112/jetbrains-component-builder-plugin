@@ -19,8 +19,12 @@ class SettingsService : SettingsState, BaseState(), PersistentStateComponent<Set
         copyFrom(state)
     }
 
+    fun equalsState(state: SettingsService): Boolean {
+        return this.items.hashCode() == state.items.hashCode()
+    }
+
     fun getParentItems(): List<Item> {
-        return items.filter { it.parent.isEmpty() }
+        return items.filter { it.isParent }
     }
 
     fun getChildrenByItem(item: Item): List<Item> {
