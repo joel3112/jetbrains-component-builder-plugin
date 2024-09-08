@@ -50,7 +50,7 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
         val targetLocation = selectedLocation?.let { getLocation(it) }
 
         ApplicationManager.getApplication().runWriteAction(
-            BuilderCreator(targetLocation!!, dialog.getCName(), item, project)
+            BuilderCreator(targetLocation!!, dialog.cname, item, project)
         )
     }
 

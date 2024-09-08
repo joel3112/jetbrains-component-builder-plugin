@@ -17,7 +17,10 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
     var isCanceled = false
         protected set
 
-    private val nameRegex = "[a-zA-Z0-9]+".toRegex()
+    val cname: String
+        get() = textField.component.text
+
+    private val nameRegex = "^[a-zA-Z0-9]+(\\s[a-zA-Z0-9]+)*$".toRegex()
     private lateinit var textField: Cell<JBTextField>
 
 
@@ -52,10 +55,6 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
         isResizable = false
         title = message("builder.popup.create.title", item.name)
         okAction.isEnabled = false
-    }
-
-    fun getCName(): String {
-        return textField.component.text
     }
 
     override fun createCenterPanel(): JComponent = createPanel

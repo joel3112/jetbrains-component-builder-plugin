@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.*
+import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
@@ -93,7 +94,7 @@ class BuilderItemTree(
     protected fun createExtraActions(): Array<ActionGroup> {
         val buttons: ActionGroup = DefaultActionGroup().apply {
             val addButton: AnActionButton =
-                object : AnActionButton("Add File Type", AllIcons.Actions.AddFile) {
+                object : AnActionButton(message("builder.settings.tree.action.add"), AllIcons.General.Add) {
                     override fun actionPerformed(e: AnActionEvent) {
                         addNewNode()
                     }
@@ -103,7 +104,7 @@ class BuilderItemTree(
                 }
 
             val addChildButton: AnActionButton =
-                object : AnActionButton("Add Child File Type", AllIcons.Actions.AddFile) {
+                object : AnActionButton(message("builder.settings.tree.action.add.child"), AllIcons.Actions.AddFile) {
                     override fun actionPerformed(e: AnActionEvent) {
                         addNewChildNode()
                     }
@@ -113,7 +114,7 @@ class BuilderItemTree(
                 }
 
             val removeButton: AnActionButton =
-                object : AnActionButton("Remove", AllIcons.General.Remove) {
+                object : AnActionButton(message("builder.settings.tree.action.remove"), AllIcons.General.Remove) {
                     override fun actionPerformed(e: AnActionEvent) {
                         removeSelectedNode()
                     }
