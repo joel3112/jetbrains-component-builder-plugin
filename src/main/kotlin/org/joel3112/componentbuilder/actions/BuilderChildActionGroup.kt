@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import java.util.regex.Pattern
 
 class BuilderChildActionGroup : DefaultActionGroup() {
 
@@ -14,9 +15,19 @@ class BuilderChildActionGroup : DefaultActionGroup() {
 
         val selectedName: String = selectedLocation?.nameWithoutExtension ?: ""
         val selectedPath: String = selectedLocation?.path ?: ""
-        val itemMatchFilePathFormatted = settingsService?.items?.find {
-            it.filePath.isNotEmpty() && selectedPath.contains(it.filePathFormatted(selectedName))
-        }
+
+        val itemMatchFilePathFormatted = settingsService?.items
+            ?.filter {
+                it.isParent && it.enabled
+            }
+            ?.find {
+                val matcher = Pattern.compile(
+                    it.filePathFormatted(selectedName),
+                    Pattern.CASE_INSENSITIVE
+                ).matcher(selectedPath)
+
+                matcher.matches()
+            }
 
         if (itemMatchFilePathFormatted != null) {
             val enabledItems = settingsService.getChildrenByItem(itemMatchFilePathFormatted).filter {

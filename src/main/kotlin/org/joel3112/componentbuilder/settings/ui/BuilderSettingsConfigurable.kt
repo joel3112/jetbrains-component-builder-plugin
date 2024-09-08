@@ -85,7 +85,14 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                         ApplicationManager.getApplication().invokeLater {
                             settingsProperty.get().apply {
                                 items = items.map {
-                                    if (it.id == itemChanged.id) it.copy(enabled = node.isChecked) else it
+                                    if (it.id == itemChanged.id) it.copy(
+                                        enabled = node.isChecked,
+                                        id = it.id,
+                                        parent = it.parent,
+                                        name = it.name,
+                                        filePath = it.filePath,
+                                        template = it.template,
+                                    ) else it
                                 }.toMutableList()
                             }
                         }

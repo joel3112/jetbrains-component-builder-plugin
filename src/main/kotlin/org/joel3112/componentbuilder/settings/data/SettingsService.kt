@@ -6,6 +6,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 @Service(Service.Level.PROJECT)
 @State(
     name = "ComponentBuilderSettings",
+    defaultStateAsResource = true,
     storages = [Storage("ComponentBuilderSettings.xml")]
 )
 class SettingsService : SettingsState, BaseState(), PersistentStateComponent<SettingsService> {

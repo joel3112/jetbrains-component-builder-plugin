@@ -6,7 +6,35 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import java.io.File
+import java.util.regex.Pattern
 
+
+private fun convertRegexToPath(regex: String): String {
+    // Manually replace escaped slashes and dots in the regex
+    val cleanedRegex = regex
+        .replace("\\/", "/")   // Replace escaped slashes with normal slashes
+        .replace("\\.", ".")   // Replace escaped dots with normal dots
+
+    // This pattern will match full directory names and filenames with extensions
+    val pattern = Pattern.compile("[\\w-]+(?:\\.[a-z]+)?")
+    val matcher = pattern.matcher(cleanedRegex)
+    val pathParts = mutableListOf<String>()
+
+    // Collect valid components from the cleaned regex string
+    while (matcher.find()) {
+        pathParts.add(matcher.group())  // Add directory names and filenames with extensions
+    }
+
+    // Check if the regex contains directories (slashes) or just a file
+    val hasDirectory = regex.contains("/")
+
+    // Join the valid parts with slashes; if there's a directory, add the leading "/"
+    return if (hasDirectory && pathParts.size > 1) {
+        "/" + pathParts.joinToString("/")
+    } else {
+        pathParts.joinToString("/")
+    }
+}
 
 class BuilderCreator(
     private var directory: VirtualFile,
@@ -16,13 +44,12 @@ class BuilderCreator(
 ) : Runnable {
 
     private val cTemplate = item.templateFormatted(cname)
-    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "")
+    private val cFilePath = convertRegexToPath(item.filePathFormatted(cname)).replaceFirst("/", "")
 
     private val cRelativeFile = File(cFilePath)
     private val cFile = File(
         directory.path + "/" + cRelativeFile.path
     )
-
 
     @Throws(Exception::class)
     fun writeFile() {

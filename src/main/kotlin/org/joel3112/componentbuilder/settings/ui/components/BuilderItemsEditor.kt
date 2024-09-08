@@ -1,20 +1,24 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.not
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.IconUtils
-import org.joel3112.componentbuilder.utils.bindText
 import org.joel3112.componentbuilder.utils.preferredHeight
 import org.joel3112.componentbuilder.utils.preferredWidth
+import javax.swing.text.JTextComponent
+import kotlin.reflect.KMutableProperty1
 
 class BuilderItemsEditor(
     val itemProperty: GraphProperty<Item?>,
@@ -61,14 +65,8 @@ class BuilderItemsEditor(
     override fun Panel.createContent() {
         panel {
             row {
-                panel {
-                    row {
-                        comment(message("builder.settings.isChildFile.legend"), 60)
-                    }
-                }
-            }
-                .visibleIf(isChildFilePredicate)
-                .bottomGap(BottomGap.SMALL)
+                comment(message("builder.settings.isChildFile.legend"), 60)
+            }.visibleIf(isChildFilePredicate).bottomGap(BottomGap.NONE)
 
             group(message("builder.settings.group.display")) {
                 row {
@@ -94,12 +92,21 @@ class BuilderItemsEditor(
                     comment(message("builder.settings.group.file.description"))
                 }
 
-                row(message("builder.settings.filePath")) {
+                row(message("builder.settings.regexPath")) {
                     filePathTextField = expandableTextField()
-                        .comment(message("builder.settings.filePath.legend"), 50)
                         .columns(COLUMNS_LARGE)
                         .bindText(itemProperty, Item::filePath)
                 }
+                    .rowComment(message("builder.settings.regexPath.legend"), 60)
+                    .visibleIf(isChildFilePredicate.not())
+
+                row(message("builder.settings.filePath")) {
+                    filePathTextField = expandableTextField()
+                        .columns(COLUMNS_LARGE)
+                        .bindText(itemProperty, Item::filePath)
+                }
+                    .rowComment(message("builder.settings.filePath.legend"), 60)
+                    .visibleIf(isChildFilePredicate)
 
                 row {
                     templateEditor = cell(BuilderEditor(project))
@@ -114,4 +121,21 @@ class BuilderItemsEditor(
         }.enabledIf(selectedRowPredicate)
     }
 }
+
+private fun <T : JTextComponent> Cell<T>.bindText(
+    graphProperty: ObservableMutableProperty<Item?>,
+    property: KMutableProperty1<Item, String>
+) =
+    bindText(with(graphProperty) {
+        transform(
+            { it?.let(property::get).orEmpty() },
+            { value ->
+                get()?.copy()?.apply {
+                    property.set(this, value)
+                    set(this)
+                }
+            }
+        )
+    })
+
 

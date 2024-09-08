@@ -4,6 +4,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import net.pearx.kasechange.toCamelCase
 import net.pearx.kasechange.toKebabCase
 import net.pearx.kasechange.toPascalCase
+import org.joel3112.componentbuilder.utils.toReactHookCase
 import java.util.*
 
 data class Item(
@@ -37,6 +38,7 @@ data class Item(
             .replace("${"$"}KEBAB_NAME${"$"}", cname.toKebabCase())
             .replace("${"$"}PASCAL_NAME${"$"}", cname.toPascalCase())
             .replace("${"$"}CAMEL_NAME${"$"}", cname.toCamelCase())
+            .replace("${"$"}REACT_HOOK_NAME${"$"}", cname.toReactHookCase())
     }
 
     fun filePathFormatted(cname: String): String {
