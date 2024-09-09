@@ -44,7 +44,9 @@ class BuilderCreator(
 ) : Runnable {
 
     private val cTemplate = item.templateFormatted(cname)
-    private val cFilePath = convertRegexToPath(item.filePathFormatted(cname)).replaceFirst("/", "")
+    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "").let {
+        if (item.isParent) convertRegexToPath(it) else it
+    }
 
     private val cRelativeFile = File(cFilePath)
     private val cFile = File(

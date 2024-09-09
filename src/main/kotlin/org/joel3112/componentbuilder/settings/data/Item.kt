@@ -34,11 +34,11 @@ data class Item(
             return cname
         }
         return path
-            .replace("${"$"}NAME${"$"}", cname)
-            .replace("${"$"}KEBAB_NAME${"$"}", cname.toKebabCase())
-            .replace("${"$"}PASCAL_NAME${"$"}", cname.toPascalCase())
-            .replace("${"$"}CAMEL_NAME${"$"}", cname.toCamelCase())
-            .replace("${"$"}REACT_HOOK_NAME${"$"}", cname.toReactHookCase())
+            .replace("${"$"}{NAME}", cname)
+            .replace("${"$"}{KEBAB_NAME}", cname.toKebabCase())
+            .replace("${"$"}{PASCAL_NAME}", cname.toPascalCase())
+            .replace("${"$"}{CAMEL_NAME}", cname.toCamelCase())
+            .replace("${"$"}{REACT_HOOK_NAME}", cname.toReactHookCase())
     }
 
     fun filePathFormatted(cname: String): String {
