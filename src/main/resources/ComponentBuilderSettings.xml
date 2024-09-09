@@ -17,13 +17,13 @@
             </Item>
             <Item>
                 <option name="FILE_PATH" value="${PASCAL_NAME}.test.ts"/>
-                <option name="ID" value="4b9e9488-6f7a-4681-85de-fdc220sdsds60b982"/>
+                <option name="ID" value="a2033f1f-a960-4f94-843b-a6fda038ad82"/>
                 <option name="NAME" value="Tests"/>
                 <option name="PARENT" value="28e7b2b1-d786-441c-9e1b-04182f15923a"/>
             </Item>
             <Item>
                 <option name="FILE_PATH" value=".*\/${REACT_HOOK_NAME}\.ts"/>
-                <option name="ID" value="28e7b2b1-d786-441c-9e1b-04182f15923asdsaa"/>
+                <option name="ID" value="3db21e9e-28a6-49bf-a2c6-bbe3639c2ce0"/>
                 <option name="NAME" value="Hook"/>
                 <option name="TEMPLATE"
                         value="import React from 'react';&#10;&#10;export const ${CAMEL_NAME} = () =&gt; {&#10;    const [state, setState] = React.useState();&#10;    &#10;    return state;&#10;};&#10;"/>
@@ -32,7 +32,7 @@
                 <option name="FILE_PATH" value="/_tests_/use${PASCAL_NAME}.test.ts"/>
                 <option name="ID" value="94bea9b1-519a-436c-9355-313e1d0e9a9c"/>
                 <option name="NAME" value="Hook Tests"/>
-                <option name="PARENT" value="28e7b2b1-d786-441c-9e1b-04182f15923asdsaa"/>
+                <option name="PARENT" value="3db21e9e-28a6-49bf-a2c6-bbe3639c2ce0"/>
             </Item>
             <Item>
                 <option name="FILE_PATH" value=".*\/(?!use)${CAMEL_NAME}\.ts"/>
