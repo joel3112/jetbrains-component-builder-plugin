@@ -2,11 +2,11 @@
     <option name="ITEMS">
         <list>
             <Item>
-                <option name="FILE_PATH" value=".*\/${KEBAB_NAME}\/${PASCAL_NAME}\.tsx"/>
+                <option name="FILE_PATH" value=".*\/(${KEBAB_NAME}\/)?${PASCAL_NAME}\.tsx"/>
                 <option name="ID" value="28e7b2b1-d786-441c-9e1b-04182f15923a"/>
                 <option name="NAME" value="Component"/>
                 <option name="TEMPLATE"
-                        value="import * as React from 'react';&#10;&#10;type ${PASCAL_NAME}Props = {&#10;    title: string;&#10;};&#10;&#10;export const ${PASCAL_NAME} = ({ title }: ${PASCAL_NAME}Props) =&gt; {&#10;    return &lt;h1&gt;{title | '${PASCAL_NAME} Component'}&lt;/h1&gt;&#10;};&#10;"/>
+                        value="import React from 'react';&#10;&#10;type ${PASCAL_NAME}Props = {&#10;    title: string;&#10;};&#10;&#10;export const ${PASCAL_NAME} = ({ title }: ${PASCAL_NAME}Props) =&gt; {&#10;    return &lt;h1&gt;{title | '${PASCAL_NAME} Component'}&lt;/h1&gt;&#10;};&#10;"/>
             </Item>
             <Item>
                 <option name="FILE_PATH" value="${PASCAL_NAME}.module.css"/>
