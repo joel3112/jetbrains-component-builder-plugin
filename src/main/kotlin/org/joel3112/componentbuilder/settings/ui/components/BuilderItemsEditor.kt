@@ -57,6 +57,7 @@ class BuilderItemsEditor(
                 val (fileType, icon) = IconUtils.getIconByItem(it)
                 iconFileDescription.component.icon = icon!!
                 iconFileDescription.component.text = fileType
+                templateEditor.component.language = it.language
             }
         }
     }
@@ -65,7 +66,11 @@ class BuilderItemsEditor(
     override fun Panel.createContent() {
         panel {
             row {
-                comment(message("builder.settings.isChildFile.legend"), 60)
+                text(message("builder.settings.parent.legend"), 60)
+            }.visibleIf(isChildFilePredicate.not()).bottomGap(BottomGap.NONE)
+
+            row {
+                text(message("builder.settings.child.legend"), 60)
             }.visibleIf(isChildFilePredicate).bottomGap(BottomGap.NONE)
 
             group(message("builder.settings.group.display")) {
@@ -92,21 +97,35 @@ class BuilderItemsEditor(
                     comment(message("builder.settings.group.file.description"))
                 }
 
-                row(message("builder.settings.regexPath")) {
-                    filePathTextField = expandableTextField()
-                        .columns(COLUMNS_LARGE)
-                        .bindText(itemProperty, Item::filePath)
-                }
-                    .rowComment(message("builder.settings.regexPath.legend"), 60)
-                    .visibleIf(isChildFilePredicate.not())
+                row {
+                    panel {
+                        row {
+                            comment(message("builder.settings.regexPath.legend"), 60)
+                        }
 
-                row(message("builder.settings.filePath")) {
-                    filePathTextField = expandableTextField()
-                        .columns(COLUMNS_LARGE)
-                        .bindText(itemProperty, Item::filePath)
-                }
-                    .rowComment(message("builder.settings.filePath.legend"), 60)
-                    .visibleIf(isChildFilePredicate)
+                        row(message("builder.settings.regexPath")) {
+                            filePathTextField = expandableTextField()
+                                .columns(COLUMNS_LARGE)
+                                .comment(message("builder.settings.regexPath.example"))
+                                .bindText(itemProperty, Item::filePath)
+                        }
+                    }
+                }.visibleIf(isChildFilePredicate.not())
+
+                row {
+                    panel {
+                        row {
+                            comment(message("builder.settings.filePath.legend"), 60)
+                        }
+
+                        row(message("builder.settings.filePath")) {
+                            filePathTextField = expandableTextField()
+                                .columns(COLUMNS_LARGE)
+                                .comment(message("builder.settings.filePath.example"))
+                                .bindText(itemProperty, Item::filePath)
+                        }
+                    }
+                }.visibleIf(isChildFilePredicate)
 
                 row {
                     templateEditor = cell(BuilderEditor(project))

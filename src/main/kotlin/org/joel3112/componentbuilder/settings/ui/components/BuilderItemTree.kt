@@ -7,8 +7,10 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
 import com.intellij.ui.*
 import org.joel3112.componentbuilder.BuilderBundle.message
+import org.joel3112.componentbuilder.settings.data.DEFAULT_NAME
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import org.joel3112.componentbuilder.settings.data.createDefaultId
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.TreeUtils
 import javax.swing.JComponent
@@ -91,10 +93,10 @@ class BuilderItemTree(
             .setToolbarPosition(ActionToolbarPosition.TOP)
     }
 
-    protected fun createExtraActions(): Array<ActionGroup> {
+    private fun createExtraActions(): Array<ActionGroup> {
         val buttons: ActionGroup = DefaultActionGroup().apply {
             val addButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.add"), AllIcons.General.Add) {
+                object : AnActionButton(message("builder.settings.tree.action.add.parent"), AllIcons.General.Add) {
                     override fun actionPerformed(e: AnActionEvent) {
                         addNewNode()
                     }
@@ -123,18 +125,29 @@ class BuilderItemTree(
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
                 }
 
-            val addActions = mutableListOf<AnAction>().apply {
-                add(addButton)
-                add(addChildButton)
-            }
-            add(
-                TreeUtils.actionsPopup(
-                    title = "Add",
-                    icon = AllIcons.General.Add,
-                    actions = addActions
-                )
+            val duplicateButton: AnActionButton =
+                object : AnActionButton(message("builder.settings.tree.action.duplicate"), AllIcons.Actions.Copy) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        duplicateSelectedNode()
+                    }
+
+                    override fun isEnabled(): Boolean =
+                        lastSelectedPathComponent != null && !(lastSelectedPathComponent as CheckedTreeNode).isParent
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
+
+            val addGroupButton = TreeUtils.actionsPopup(
+                title = message("builder.settings.tree.action.add"),
+                icon = AllIcons.General.Add,
+                actions = mutableListOf<AnAction>().apply {
+                    add(addButton)
+                    add(addChildButton)
+                }
             )
+            add(addGroupButton)
             add(removeButton)
+            add(duplicateButton)
         }
         return arrayOf(buttons)
     }
@@ -176,6 +189,17 @@ class BuilderItemTree(
         }
         syncNodes()
         selectNode(null)
+    }
+
+    private fun duplicateSelectedNode() {
+        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+        val newItem = (selectedNode.userObject as Item).copy(
+            id = createDefaultId(),
+            name = DEFAULT_NAME
+        )
+        itemsProperty.get().add(newItem)
+        syncNodes()
+        selectNode(findNode(newItem))
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
