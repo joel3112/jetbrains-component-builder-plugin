@@ -28,6 +28,11 @@ class FileUtils {
             val fileName = File(filePath).name
             return fileName
         }
+
+        fun getFileExtension(filePath: String): String {
+            val extension = File(filePath).extension
+            return extension
+        }
     }
 }
 

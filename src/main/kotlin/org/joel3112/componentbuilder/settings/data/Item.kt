@@ -1,9 +1,13 @@
 package org.joel3112.componentbuilder.settings.data
 
+import com.intellij.lang.Language
+import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.util.xmlb.annotations.OptionTag
 import net.pearx.kasechange.toCamelCase
 import net.pearx.kasechange.toKebabCase
 import net.pearx.kasechange.toPascalCase
+import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.toReactHookCase
 import java.util.*
 
@@ -31,6 +35,18 @@ data class Item(
 ) {
     val isParent: Boolean
         get() = parent.isEmpty()
+
+    val language: Language?
+        get() {
+            val fileExtension = FileUtils.getFileExtension(filePathFormatted(name))
+            val fileType = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension)
+
+            return if (fileType is LanguageFileType) {
+                fileType.language
+            } else {
+                null
+            }
+        }
 
     private fun replaceVariables(path: String, cname: String): String {
         if (path.isEmpty()) {

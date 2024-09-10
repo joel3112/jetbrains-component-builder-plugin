@@ -57,6 +57,7 @@ class BuilderItemsEditor(
                 val (fileType, icon) = IconUtils.getIconByItem(it)
                 iconFileDescription.component.icon = icon!!
                 iconFileDescription.component.text = fileType
+                templateEditor.component.language = it.language
             }
         }
     }
@@ -67,6 +68,7 @@ class BuilderItemsEditor(
             row {
                 text(message("builder.settings.parent.legend"), 60)
             }.visibleIf(isChildFilePredicate.not()).bottomGap(BottomGap.NONE)
+
             row {
                 text(message("builder.settings.child.legend"), 60)
             }.visibleIf(isChildFilePredicate).bottomGap(BottomGap.NONE)
@@ -101,12 +103,12 @@ class BuilderItemsEditor(
                             comment(message("builder.settings.regexPath.legend"), 60)
                         }
 
-                row(message("builder.settings.regexPath")) {
-                    filePathTextField = expandableTextField()
-                        .columns(COLUMNS_LARGE)
+                        row(message("builder.settings.regexPath")) {
+                            filePathTextField = expandableTextField()
+                                .columns(COLUMNS_LARGE)
                                 .comment(message("builder.settings.regexPath.example"))
-                        .bindText(itemProperty, Item::filePath)
-                }
+                                .bindText(itemProperty, Item::filePath)
+                        }
                     }
                 }.visibleIf(isChildFilePredicate.not())
 
@@ -116,12 +118,12 @@ class BuilderItemsEditor(
                             comment(message("builder.settings.filePath.legend"), 60)
                         }
 
-                row(message("builder.settings.filePath")) {
-                    filePathTextField = expandableTextField()
-                        .columns(COLUMNS_LARGE)
+                        row(message("builder.settings.filePath")) {
+                            filePathTextField = expandableTextField()
+                                .columns(COLUMNS_LARGE)
                                 .comment(message("builder.settings.filePath.example"))
-                        .bindText(itemProperty, Item::filePath)
-                }
+                                .bindText(itemProperty, Item::filePath)
+                        }
                     }
                 }.visibleIf(isChildFilePredicate)
 

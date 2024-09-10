@@ -1,12 +1,16 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
+import com.intellij.lang.Language
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
@@ -20,6 +24,11 @@ import javax.swing.ScrollPaneConstants
 
 class BuilderEditor(val project: Project) : JTextArea() {
     private val editor: EditorEx = createEditor()
+
+    var language: Language? = null
+        set(value) {
+            this.setSyntaxHighlighting(value)
+        }
 
     init {
         layout = BorderLayout()
@@ -65,6 +74,30 @@ class BuilderEditor(val project: Project) : JTextArea() {
             EditorColorsManager.getInstance().globalScheme
         } else {
             EditorColorsManager.getInstance().schemeForCurrentUITheme
+        }
+    }
+
+    private fun setSyntaxHighlighting(language: Language?) {
+        if (language != null) {
+            // Retrieve the appropriate syntax highlighter for the given language
+            val syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null)
+
+            if (syntaxHighlighter != null) {
+                // Use the EditorHighlighterFactory to apply the highlighter to the editor
+                val editorHighlighter = EditorHighlighterFactory.getInstance()
+                    .createEditorHighlighter(syntaxHighlighter, editor.colorsScheme)
+                editor.highlighter = editorHighlighter
+            } else {
+                // Fallback to plain text highlighter if no syntax highlighter is found
+                val plainTextHighlighter =
+                    EditorHighlighterFactory.getInstance().createEditorHighlighter(project, PlainTextFileType.INSTANCE)
+                editor.highlighter = plainTextHighlighter
+            }
+        } else {
+            // Handle the case where language is null by applying a plain text highlighter
+            val plainTextHighlighter =
+                EditorHighlighterFactory.getInstance().createEditorHighlighter(project, PlainTextFileType.INSTANCE)
+            editor.highlighter = plainTextHighlighter
         }
     }
 
