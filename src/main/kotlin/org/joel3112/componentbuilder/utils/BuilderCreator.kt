@@ -11,18 +11,19 @@ class BuilderCreator(
     private var directory: VirtualFile,
     cname: String,
     item: Item,
+    private val openAfterCreation: Boolean = false,
     private val project: Project
 ) : Runnable {
 
     private val cTemplate = item.templateFormatted(cname)
-    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "").let {
-        if (item.isParent) it.convertRegexToPath() else it
-    }
+    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "")
 
     private val cRelativeFile = File(cFilePath)
     private val cFile = File(
         directory.path + "/" + cRelativeFile.path
     )
+
+    var virtualFileCreated: VirtualFile? = null
 
     @Throws(Exception::class)
     fun writeFile() {
@@ -44,9 +45,12 @@ class BuilderCreator(
 
         try {
             val cVirtualFile = cDirectory.createChildData(cDirectory, cFile.name)
+            virtualFileCreated = cVirtualFile
 
             FileUtils.writeFile(cVirtualFile, cTemplate)
-            FileUtils.openFile(cVirtualFile, project)
+            if (openAfterCreation) {
+                FileUtils.openFile(cVirtualFile, project)
+            }
 
             NotificationUtils.notifyInfo(message("builder.notification.create.success", cFilePath), project)
 

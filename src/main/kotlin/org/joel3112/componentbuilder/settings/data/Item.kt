@@ -4,11 +4,9 @@ import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.util.xmlb.annotations.OptionTag
-import net.pearx.kasechange.toCamelCase
-import net.pearx.kasechange.toKebabCase
-import net.pearx.kasechange.toPascalCase
 import org.joel3112.componentbuilder.utils.FileUtils
-import org.joel3112.componentbuilder.utils.toReactHookCase
+import org.joel3112.componentbuilder.utils.convertRegexToPath
+import org.joel3112.componentbuilder.utils.replaceVariables
 import java.util.*
 
 const val DEFAULT_NAME = "Unnamed"
@@ -48,23 +46,21 @@ data class Item(
             }
         }
 
-    private fun replaceVariables(path: String, cname: String): String {
-        if (path.isEmpty()) {
-            return cname
+    fun filePathFormatted(cname: String): String {
+        if (isParent) {
+            return filePath.replaceVariables(cname).convertRegexToPath()
         }
-        return path
-            .replace("${"$"}{NAME}", cname)
-            .replace("${"$"}{KEBAB_NAME}", cname.toKebabCase())
-            .replace("${"$"}{PASCAL_NAME}", cname.toPascalCase())
-            .replace("${"$"}{CAMEL_NAME}", cname.toCamelCase())
-            .replace("${"$"}{REACT_HOOK_NAME}", cname.toReactHookCase())
+        return filePath.replaceVariables(cname)
     }
 
-    fun filePathFormatted(cname: String): String {
-        return replaceVariables(filePath, cname)
+    fun regexPathFormatted(cname: String): String? {
+        if (isParent) {
+            return filePath.replaceVariables(cname)
+        }
+        return null
     }
 
     fun templateFormatted(cname: String): String {
-        return replaceVariables(template, cname)
+        return template.replaceVariables(cname)
     }
 }
