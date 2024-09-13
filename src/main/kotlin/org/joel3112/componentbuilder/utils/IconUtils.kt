@@ -55,7 +55,7 @@ class IconUtils {
             return IconLoader.getIcon(iconPath, this::class.java)
         }
 
-        private fun getIconMatchFilePath(path: String): Pair<String, Icon?> {
+        private fun getIconMatchFilePath(path: String): Pair<String, Icon> {
             val darkMode = isDarkMode()
             for ((pattern, fileIcon) in mapFileNameToIcon) {
                 if (path.matches(Regex(pattern))) {
@@ -70,7 +70,7 @@ class IconUtils {
             return Pair(defaultIcon?.fileType ?: "Any", icon)
         }
 
-        fun getIconByItem(item: Item): Pair<String, Icon?> {
+        fun getIconByItem(item: Item): Pair<String, Icon> {
             val filePath = FileUtils.getFileName(item.filePathFormatted(item.name))
             return getIconMatchFilePath(filePath)
         }

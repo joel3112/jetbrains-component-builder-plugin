@@ -22,7 +22,7 @@ class BuilderChildActionGroup : DefaultActionGroup() {
             }
             ?.find {
                 val matcher = Pattern.compile(
-                    it.filePathFormatted(selectedName),
+                    it.regexPathFormatted(selectedName)!!,
                     Pattern.CASE_INSENSITIVE
                 ).matcher(selectedPath)
 
