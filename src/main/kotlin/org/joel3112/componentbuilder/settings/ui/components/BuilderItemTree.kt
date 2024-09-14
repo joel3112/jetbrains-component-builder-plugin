@@ -1,6 +1,8 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.dnd.*
+import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -53,6 +55,7 @@ class BuilderItemTree(
     CheckPolicy(true, true, true, true)
 ) {
     private var myDecorator: ToolbarDecorator
+    private var onItemDroppedListener: ((draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit)? = null
 
     private val itemsProperty = settingsProperty.transform(
         { it.items },
@@ -80,11 +83,55 @@ class BuilderItemTree(
     init {
         myDecorator = createToolbarDecorator()
         syncNodes()
+        setupDragAndDrop()
 
         selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
         isRootVisible = false
         showsRootHandles = true
         model = DefaultTreeModel(root)
+    }
+
+    private fun setupDragAndDrop() {
+        DnDSupport.createBuilder(this)
+            .setBeanProvider {
+                val nodeToDrag = lastSelectedPathComponent as? CheckedTreeNode
+                if (nodeToDrag != null && !nodeToDrag.isParent) {
+                    DnDDragStartBean(nodeToDrag)
+                } else null
+            }
+            .setImageProvider { info: DnDActionInfo ->
+                val point = info.point
+                val path = getPathForLocation(point.x, point.y)
+                if (path != null) {
+                    val image = DnDAwareTree.getDragImage(this, path, point).first
+                    DnDImage(image)
+                } else null
+            }
+            .setTargetChecker(object : DnDTargetChecker {
+                override fun update(event: DnDEvent): Boolean {
+                    val targetPath = getPathForLocation(event.point.x, event.point.y)
+                    val isDropPossible = targetPath != null
+                    event.isDropPossible = isDropPossible
+                    return isDropPossible
+                }
+            })
+            .setDropHandler { event ->
+                val targetPath = getPathForLocation(event.point.x, event.point.y)
+                val targetNode = targetPath?.lastPathComponent as? CheckedTreeNode
+                val draggedNode = event.attachedObject as? CheckedTreeNode
+
+                if (targetNode != null && draggedNode != null && targetNode.isParent) {
+                    val currentParentNode = draggedNode.parent as? CheckedTreeNode
+                    if (currentParentNode != targetNode) {
+                        onItemDroppedListener?.invoke(draggedNode, targetNode)
+                    }
+                }
+            }
+            .install()
+    }
+
+    fun addTreeDropListener(listener: (draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit) {
+        onItemDroppedListener = listener
     }
 
     private fun createToolbarDecorator(): ToolbarDecorator {
@@ -164,14 +211,14 @@ class BuilderItemTree(
         }
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNode(findNode(newItem))
+        selectNodeByItem(newItem)
     }
 
     private fun addNewNode() {
         val newItem = Item()
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNode(findNode(newItem))
+        selectNodeByItem(newItem)
     }
 
     private fun removeSelectedNode() {
@@ -188,7 +235,7 @@ class BuilderItemTree(
             }
         }
         syncNodes()
-        selectNode(null)
+        selectNodeByItem(null)
     }
 
     private fun duplicateSelectedNode() {
@@ -199,7 +246,7 @@ class BuilderItemTree(
         )
         itemsProperty.get().add(newItem)
         syncNodes()
-        selectNode(findNode(newItem))
+        selectNodeByItem(newItem)
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -216,7 +263,7 @@ class BuilderItemTree(
         expandAllNodes(root, TreePath(root))
     }
 
-    private fun findNode(item: Item): CheckedTreeNode? {
+    private fun findNodeByItem(item: Item): CheckedTreeNode? {
         val rootNode = model.root as CheckedTreeNode
         return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
             .find { node ->
@@ -229,16 +276,16 @@ class BuilderItemTree(
             }
     }
 
-    fun selectNode(node: CheckedTreeNode?) {
-        if (node != null) {
-            selectionPath = TreePath(node.path)
+    fun selectNodeByItem(item: Item?) {
+        if (item != null) {
+            selectionPath = TreePath(findNodeByItem(item)!!.path)
             return
         }
         clearSelection()
     }
 
-    fun refreshNode(item: Item) {
-        val node = findNode(item)
+    fun refreshNodeByItem(item: Item) {
+        val node = findNodeByItem(item)
         if (node != null && node.userObject != item) {
             node.userObject = item
             (model as DefaultTreeModel).nodeChanged(node)

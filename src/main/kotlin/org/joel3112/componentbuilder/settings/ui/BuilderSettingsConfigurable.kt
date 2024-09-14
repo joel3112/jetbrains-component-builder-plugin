@@ -10,13 +10,13 @@ import com.intellij.ui.CheckedTreeNode
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.util.preferredWidth
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
+import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.JComponent
 
 class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
@@ -35,12 +35,15 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 ApplicationManager.getApplication().invokeLater {
                 }
                 if (item != null) {
-                    settingsProperty.set(
-                        settingsProperty.get().apply {
-                            items = items.map { if (it.id == item.id) item else it }.toMutableList()
-                        }
-                    )
-                    itemsTree.refreshNode(item)
+                    val itemInSettings = settingsProperty.get().items.find { it.id == item.id }
+                    if (!item.equals(itemInSettings)) {
+                        settingsProperty.set(
+                            settingsProperty.get().apply {
+                                items = items.map { if (it.id == item.id) item else it }.toMutableList()
+                            }
+                        )
+                        itemsTree.refreshNodeByItem(item)
+                    }
                 }
             }
         }
@@ -58,7 +61,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
             cell(itemsTree.component)
                 .align(Align.FILL)
                 .applyToComponent {
-                    preferredWidth = JBUI.scale(200)
+                    preferredWidth(JBUI.scale(200))
                 }
 
             cell(itemsEditor.createPanel())
@@ -99,6 +102,15 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                     }
                 })
 
+                addTreeDropListener { draggedNode, newParentNode ->
+                    val newParentItem = newParentNode.userObject as Item
+                    val updatedItem = (draggedNode.userObject as Item).copy(parent = newParentItem.id)
+
+                    itemProperty.set(updatedItem)
+                    itemsTree.syncNodes()
+                    itemsTree.selectNodeByItem(updatedItem)
+                }
+
                 val items = settingsProperty.get().items
                 val firstSelected = if (items.size > 0) items.first() else itemProperty.get()
                 if (firstSelected != null) {
@@ -126,7 +138,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
         itemProperty.set(if (items.isNotEmpty()) items.find { it.id == itemProperty.get()?.id } else null)
 
         itemsTree.syncNodes()
-        itemsTree.selectNode(null)
+        itemsTree.selectNodeByItem(null)
     }
 
     override fun apply() {

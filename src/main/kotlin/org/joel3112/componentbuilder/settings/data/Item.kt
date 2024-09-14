@@ -46,6 +46,10 @@ data class Item(
             }
         }
 
+    override fun equals(other: Any?): Boolean {
+        return this.hashCode() == other.hashCode()
+    }
+
     fun filePathFormatted(cname: String): String {
         if (isParent) {
             return filePath.replaceVariables(cname).convertRegexToPath()
