@@ -14,6 +14,7 @@ import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import org.joel3112.componentbuilder.settings.data.sortByParent
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
 import org.joel3112.componentbuilder.utils.preferredWidth
@@ -81,6 +82,10 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                     }
                 }
 
+                addTreeStructureChangeListener {
+                    sortItems()
+                }
+
                 addCheckboxTreeListener(object : CheckboxTreeListener {
                     override fun nodeStateChanged(node: CheckedTreeNode) {
                         val itemChanged = node.userObject as Item
@@ -102,13 +107,8 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                     }
                 })
 
-                addTreeDropListener { draggedNode, newParentNode ->
-                    val newParentItem = newParentNode.userObject as Item
-                    val updatedItem = (draggedNode.userObject as Item).copy(parent = newParentItem.id)
-
-                    itemProperty.set(updatedItem)
-                    itemsTree.syncNodes()
-                    itemsTree.selectNodeByItem(updatedItem)
+                addTreeNodeDropListener { draggedNode, _ ->
+                    itemProperty.set(draggedNode.userObject as Item)
                 }
 
                 val items = settingsProperty.get().items
@@ -119,6 +119,14 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 }
             }
         }
+    }
+
+    private fun sortItems() {
+        settingsProperty.set(
+            settingsProperty.get().apply {
+                items = items.sortByParent()
+            }
+        )
     }
 
     override fun createComponent(): JComponent = settingsPanel

@@ -68,3 +68,17 @@ data class Item(
         return template.replaceVariables(cname)
     }
 }
+
+
+fun MutableList<Item>.sortByParent(): MutableList<Item> {
+    val orderedList = mutableListOf<Item>()
+    val parentItems = this.filter { it.isParent }
+
+    for (parent in parentItems) {
+        orderedList.add(parent)
+        val children = this.filter { it.parent == parent.id }
+        orderedList.addAll(children)
+    }
+
+    return orderedList
+}

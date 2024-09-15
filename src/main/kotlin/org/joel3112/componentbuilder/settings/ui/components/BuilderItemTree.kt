@@ -55,7 +55,8 @@ class BuilderItemTree(
     CheckPolicy(true, true, true, true)
 ) {
     private var myDecorator: ToolbarDecorator
-    private var onItemDroppedListener: ((draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit)? = null
+    private var onDroppedListener: ((draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit)? = null
+    private var onStructureListener: ((node: CheckedTreeNode?) -> Unit)? = null
 
     private val itemsProperty = settingsProperty.transform(
         { it.items },
@@ -123,15 +124,23 @@ class BuilderItemTree(
                 if (targetNode != null && draggedNode != null && targetNode.isParent) {
                     val currentParentNode = draggedNode.parent as? CheckedTreeNode
                     if (currentParentNode != targetNode) {
-                        onItemDroppedListener?.invoke(draggedNode, targetNode)
+                        val newParentItem = targetNode.userObject as Item
+                        val updatedItem = (draggedNode.userObject as Item).copy(parent = newParentItem.id)
+
+                        onDroppedListener?.invoke(CheckedTreeNode((updatedItem)), targetNode)
+                        refreshAfterMutation(CheckedTreeNode(updatedItem))
                     }
                 }
             }
             .install()
     }
 
-    fun addTreeDropListener(listener: (draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit) {
-        onItemDroppedListener = listener
+    fun addTreeNodeDropListener(listener: (draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit) {
+        onDroppedListener = listener
+    }
+
+    fun addTreeStructureChangeListener(listener: (nodes: CheckedTreeNode?) -> Unit) {
+        onStructureListener = listener
     }
 
     private fun createToolbarDecorator(): ToolbarDecorator {
@@ -210,15 +219,13 @@ class BuilderItemTree(
             Item(parent = (parentNode.userObject as Item).id, enabled = parentNode.isChecked)
         }
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNodeByItem(newItem)
+        refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
     private fun addNewNode() {
         val newItem = Item()
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNodeByItem(newItem)
+        refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
     private fun removeSelectedNode() {
@@ -234,8 +241,7 @@ class BuilderItemTree(
                 }
             }
         }
-        syncNodes()
-        selectNodeByItem(null)
+        refreshAfterMutation(null)
     }
 
     private fun duplicateSelectedNode() {
@@ -245,8 +251,7 @@ class BuilderItemTree(
             name = DEFAULT_NAME
         )
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNodeByItem(newItem)
+        refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -274,6 +279,13 @@ class BuilderItemTree(
                     false
                 }
             }
+    }
+
+    private fun refreshAfterMutation(node: CheckedTreeNode?) {
+        val item = node?.userObject as Item?
+        syncNodes()
+        selectNodeByItem(item)
+        onStructureListener?.invoke(CheckedTreeNode(item))
     }
 
     fun selectNodeByItem(item: Item?) {
