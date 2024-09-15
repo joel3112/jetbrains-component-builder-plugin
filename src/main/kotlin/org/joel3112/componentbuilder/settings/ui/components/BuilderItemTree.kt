@@ -193,6 +193,40 @@ class BuilderItemTree(
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
                 }
 
+            val upButton: AnActionButton =
+                object : AnActionButton(message("builder.settings.tree.action.up"), AllIcons.Actions.MoveUp) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        moveUpSelectedNode()
+                    }
+
+                    override fun isEnabled(): Boolean {
+                        if (lastSelectedPathComponent == null) return false
+                        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+                        if (selectedNode.isParent) return false
+
+                        return selectedNode.indexInParent != 0
+                    }
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
+
+            val downButton: AnActionButton =
+                object : AnActionButton(message("builder.settings.tree.action.down"), AllIcons.Actions.MoveDown) {
+                    override fun actionPerformed(e: AnActionEvent) {
+                        moveDownSelectedNode()
+                    }
+
+                    override fun isEnabled(): Boolean {
+                        if (lastSelectedPathComponent == null) return false
+                        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+                        if (selectedNode.isParent) return false
+
+                        return selectedNode.indexInParent != (selectedNode.parent as CheckedTreeNode).childrenCount - 1
+                    }
+
+                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+                }
+
             val addGroupButton = TreeUtils.actionsPopup(
                 title = message("builder.settings.tree.action.add"),
                 icon = AllIcons.General.Add,
@@ -204,6 +238,8 @@ class BuilderItemTree(
             add(addGroupButton)
             add(removeButton)
             add(duplicateButton)
+            add(upButton)
+            add(downButton)
         }
         return arrayOf(buttons)
     }
@@ -252,6 +288,26 @@ class BuilderItemTree(
         )
         itemsProperty.get().add(newItem)
         refreshAfterMutation(CheckedTreeNode(newItem))
+    }
+
+    private fun moveUpSelectedNode() {
+        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+        val currentIndexInList = itemsProperty.get().indexOf(selectedNode.userObject as Item)
+
+        itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList - 1].also {
+            itemsProperty.get()[currentIndexInList - 1] = itemsProperty.get()[currentIndexInList]
+        }
+        refreshAfterMutation(selectedNode)
+    }
+
+    private fun moveDownSelectedNode() {
+        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
+        val currentIndexInList = itemsProperty.get().indexOf(selectedNode.userObject as Item)
+
+        itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList + 1].also {
+            itemsProperty.get()[currentIndexInList + 1] = itemsProperty.get()[currentIndexInList]
+        }
+        refreshAfterMutation(selectedNode)
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -331,5 +387,26 @@ class BuilderItemTree(
 
 private val CheckedTreeNode.isParent: Boolean
     get() {
-        return parent === root
+        return parent === root || this === root
+    }
+
+private val CheckedTreeNode.children: MutableList<CheckedTreeNode>?
+    get() {
+        if (isParent) {
+            return children()?.toList()?.map { it as CheckedTreeNode }?.toMutableList()
+        }
+        return null
+    }
+
+private val CheckedTreeNode.childrenCount: Int
+    get() {
+        if (isParent) {
+            return children?.size ?: 0
+        }
+        return 0
+    }
+
+private val CheckedTreeNode.indexInParent: Int?
+    get() {
+        return (parent as CheckedTreeNode).children?.indexOf(this)
     }
