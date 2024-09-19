@@ -52,7 +52,7 @@ class BuilderItemTree(
 ) : CheckboxTreeBase(
     CheckBoxTreeCellRenderer(),
     root,
-    CheckPolicy(true, true, true, true)
+    CheckPolicy(true, true, true, false)
 ) {
     private var myDecorator: ToolbarDecorator
     private var onDroppedListener: ((draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit)? = null
