@@ -33,7 +33,7 @@ private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRender
         hasFocus: Boolean
     ) {
         val node = value as CheckedTreeNode
-        val item = node.userObject as Item
+        val item = node.item
 
         textRenderer.isEnabled = node.isChecked
         textRenderer.icon = IconUtils.getIconByItem(item).second
@@ -70,6 +70,13 @@ class BuilderItemTree(
         }
     )
 
+    val lastSelectedPathComponent: CheckedTreeNode?
+        get() = super.getLastSelectedPathComponent() as? CheckedTreeNode
+    private val currentNodeSelected: CheckedTreeNode
+        get() = lastSelectedPathComponent as CheckedTreeNode
+    private val parentNodeSelected: CheckedTreeNode
+        get() = currentNodeSelected.parent as CheckedTreeNode
+
     val component: JComponent
         get() {
             if (!isUpDownSupported()) {
@@ -95,8 +102,8 @@ class BuilderItemTree(
     private fun setupDragAndDrop() {
         DnDSupport.createBuilder(this)
             .setBeanProvider {
-                val nodeToDrag = lastSelectedPathComponent as? CheckedTreeNode
-                if (nodeToDrag != null && !nodeToDrag.isParent) {
+                val nodeToDrag = currentNodeSelected
+                if (!nodeToDrag.isParent) {
                     DnDDragStartBean(nodeToDrag)
                 } else null
             }
@@ -122,13 +129,14 @@ class BuilderItemTree(
                 val draggedNode = event.attachedObject as? CheckedTreeNode
 
                 if (targetNode != null && draggedNode != null && targetNode.isParent) {
-                    val currentParentNode = draggedNode.parent as? CheckedTreeNode
+                    val currentParentNode = draggedNode.parent
                     if (currentParentNode != targetNode) {
-                        val newParentItem = targetNode.userObject as Item
-                        val updatedItem = (draggedNode.userObject as Item).copy(parent = newParentItem.id)
+                        val newParentItem = targetNode.item
+                        val updatedItem = draggedNode.item.copy(parent = newParentItem.id)
+                        val updatedNode = CheckedTreeNode(updatedItem)
 
-                        onDroppedListener?.invoke(CheckedTreeNode((updatedItem)), targetNode)
-                        refreshAfterMutation(CheckedTreeNode(updatedItem))
+                        onDroppedListener?.invoke(updatedNode, targetNode)
+                        refreshAfterMutation(updatedNode)
                     }
                 }
             }
@@ -188,7 +196,7 @@ class BuilderItemTree(
                     }
 
                     override fun isEnabled(): Boolean =
-                        lastSelectedPathComponent != null && !(lastSelectedPathComponent as CheckedTreeNode).isParent
+                        selectionCount == 1 && lastSelectedPathComponent?.isParent == false
 
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
                 }
@@ -200,11 +208,8 @@ class BuilderItemTree(
                     }
 
                     override fun isEnabled(): Boolean {
-                        if (lastSelectedPathComponent == null) return false
-                        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-                        if (selectedNode.isParent) return false
-
-                        return selectedNode.indexInParent != 0
+                        if (selectionCount > 1 || lastSelectedPathComponent?.isParent == true) return false
+                        return lastSelectedPathComponent?.indexInParent != 0
                     }
 
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -217,11 +222,10 @@ class BuilderItemTree(
                     }
 
                     override fun isEnabled(): Boolean {
-                        if (lastSelectedPathComponent == null) return false
-                        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-                        if (selectedNode.isParent) return false
-
-                        return selectedNode.indexInParent != (selectedNode.parent as CheckedTreeNode).childrenCount - 1
+                        if (selectionCount > 1 || (lastSelectedPathComponent?.isParent == true)) return false
+                        return lastSelectedPathComponent?.indexInParent != lastSelectedPathComponent?.parent?.childCount?.minus(
+                            1
+                        )
                     }
 
                     override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -247,12 +251,10 @@ class BuilderItemTree(
     private fun isUpDownSupported() = false
 
     private fun addNewChildNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val parentNode = selectedNode.parent as CheckedTreeNode
-        val newItem = if (selectedNode.isParent) {
-            Item(parent = (selectedNode.userObject as Item).id, enabled = selectedNode.isChecked)
+        val newItem = if (currentNodeSelected.isParent) {
+            Item(parent = currentNodeSelected.item.id, enabled = currentNodeSelected.isChecked)
         } else {
-            Item(parent = (parentNode.userObject as Item).id, enabled = parentNode.isChecked)
+            Item(parent = parentNodeSelected.item.id, enabled = parentNodeSelected.isChecked)
         }
         itemsProperty.get().add(newItem)
         refreshAfterMutation(CheckedTreeNode(newItem))
@@ -265,24 +267,20 @@ class BuilderItemTree(
     }
 
     private fun removeSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val item = selectedNode.userObject
-        if (item is Item) {
-            itemsProperty.get().remove(item)
+        val removedItem = currentNodeSelected.item
+        itemsProperty.get().remove(removedItem)
 
-            if (item.isParent) {
-                val children = itemsProperty.get().filter { it.parent == item.id }
-                children.forEach { childItem ->
-                    itemsProperty.get().remove(childItem)
-                }
+        if (removedItem.isParent) {
+            val children = itemsProperty.get().filter { it.parent == removedItem.id }
+            children.forEach { childItem ->
+                itemsProperty.get().remove(childItem)
             }
         }
         refreshAfterMutation(null)
     }
 
     private fun duplicateSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val newItem = (selectedNode.userObject as Item).copy(
+        val newItem = currentNodeSelected.item.copy(
             id = createDefaultId(),
             name = DEFAULT_NAME
         )
@@ -291,23 +289,23 @@ class BuilderItemTree(
     }
 
     private fun moveUpSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val currentIndexInList = itemsProperty.get().indexOf(selectedNode.userObject as Item)
+        val movedItem = currentNodeSelected.item
+        val currentIndexInList = itemsProperty.get().indexOf(movedItem)
 
         itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList - 1].also {
             itemsProperty.get()[currentIndexInList - 1] = itemsProperty.get()[currentIndexInList]
         }
-        refreshAfterMutation(selectedNode)
+        refreshAfterMutation(currentNodeSelected)
     }
 
     private fun moveDownSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val currentIndexInList = itemsProperty.get().indexOf(selectedNode.userObject as Item)
+        val movedItem = currentNodeSelected.item
+        val currentIndexInList = itemsProperty.get().indexOf(movedItem)
 
         itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList + 1].also {
             itemsProperty.get()[currentIndexInList + 1] = itemsProperty.get()[currentIndexInList]
         }
-        refreshAfterMutation(selectedNode)
+        refreshAfterMutation(currentNodeSelected)
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -326,19 +324,13 @@ class BuilderItemTree(
 
     private fun findNodeByItem(item: Item): CheckedTreeNode? {
         val rootNode = model.root as CheckedTreeNode
-        return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
-            .find { node ->
-                val selectedObject = node.userObject
-                if (selectedObject is Item) {
-                    (node.userObject as Item).id == item.id
-                } else {
-                    false
-                }
-            }
+        return rootNode.breadthFirstEnumeration().asSequence()
+            .map { it as CheckedTreeNode }
+            .find { node -> node.item.id == item.id }
     }
 
     private fun refreshAfterMutation(node: CheckedTreeNode?) {
-        val item = node?.userObject as Item?
+        val item = node?.item
         syncNodes()
         selectNodeByItem(item)
         onStructureListener?.invoke(CheckedTreeNode(item))
@@ -384,29 +376,17 @@ class BuilderItemTree(
     }
 }
 
+val CheckedTreeNode.item: Item
+    get() = userObject as Item
 
 private val CheckedTreeNode.isParent: Boolean
-    get() {
-        return parent === root || this === root
-    }
+    get() = parent === root || this === root
 
 private val CheckedTreeNode.children: MutableList<CheckedTreeNode>?
-    get() {
-        if (isParent) {
-            return children()?.toList()?.map { it as CheckedTreeNode }?.toMutableList()
-        }
-        return null
-    }
+    get() = if (isParent) children()?.toList()?.map { it as CheckedTreeNode }?.toMutableList() else null
 
 private val CheckedTreeNode.childrenCount: Int
-    get() {
-        if (isParent) {
-            return children?.size ?: 0
-        }
-        return 0
-    }
+    get() = if (isParent) children?.size ?: 0 else 0
 
 private val CheckedTreeNode.indexInParent: Int?
-    get() {
-        return (parent as CheckedTreeNode).children?.indexOf(this)
-    }
+    get() = (parent as CheckedTreeNode).children?.indexOf(this)

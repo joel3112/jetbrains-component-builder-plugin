@@ -17,6 +17,7 @@ import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.sortByParent
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemTree
 import org.joel3112.componentbuilder.settings.ui.components.BuilderItemsEditor
+import org.joel3112.componentbuilder.utils.item
 import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.JComponent
 
@@ -72,11 +73,8 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
             with(itemsTree) {
                 addTreeSelectionListener {
                     if (lastSelectedPathComponent != null) {
-                        val node = lastSelectedPathComponent as CheckedTreeNode
-                        val selectedObject = node.userObject
-                        if (selectedObject is Item) {
-                            itemProperty.set(selectedObject)
-                        }
+                        val node = lastSelectedPathComponent
+                        itemProperty.set(node?.item)
                     } else {
                         itemProperty.set(null)
                     }
@@ -88,7 +86,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
 
                 addCheckboxTreeListener(object : CheckboxTreeListener {
                     override fun nodeStateChanged(node: CheckedTreeNode) {
-                        val itemChanged = node.userObject as Item
+                        val itemChanged = node.item
 
                         ApplicationManager.getApplication().invokeLater {
                             settingsProperty.get().apply {
@@ -108,7 +106,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                 })
 
                 addTreeNodeDropListener { draggedNode, _ ->
-                    itemProperty.set(draggedNode.userObject as Item)
+                    itemProperty.set(draggedNode.item)
                 }
 
                 val items = settingsProperty.get().items
