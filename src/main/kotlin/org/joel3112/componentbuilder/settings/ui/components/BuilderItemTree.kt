@@ -1,18 +1,25 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.*
+import com.intellij.ide.dnd.*
+import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
-import com.intellij.ui.*
+import com.intellij.ui.CheckboxTreeBase
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.DEFAULT_NAME
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.createDefaultId
-import org.joel3112.componentbuilder.utils.IconUtils
-import org.joel3112.componentbuilder.utils.TreeUtils
+import org.joel3112.componentbuilder.utils.*
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
@@ -31,7 +38,7 @@ private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRender
         hasFocus: Boolean
     ) {
         val node = value as CheckedTreeNode
-        val item = node.userObject as Item
+        val item = node.item
 
         textRenderer.isEnabled = node.isChecked
         textRenderer.icon = IconUtils.getIconByItem(item).second
@@ -50,9 +57,11 @@ class BuilderItemTree(
 ) : CheckboxTreeBase(
     CheckBoxTreeCellRenderer(),
     root,
-    CheckPolicy(true, true, true, true)
+    CheckPolicy(true, true, true, false)
 ) {
     private var myDecorator: ToolbarDecorator
+    private var onDroppedListener: ((draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit)? = null
+    private var onStructureListener: ((node: CheckedTreeNode?) -> Unit)? = null
 
     private val itemsProperty = settingsProperty.transform(
         { it.items },
@@ -66,12 +75,15 @@ class BuilderItemTree(
         }
     )
 
+    val lastSelectedPathComponent: CheckedTreeNode?
+        get() = super.getLastSelectedPathComponent() as? CheckedTreeNode
+    private val currentNodeSelected: CheckedTreeNode
+        get() = lastSelectedPathComponent as CheckedTreeNode
+    private val parentNodeSelected: CheckedTreeNode
+        get() = currentNodeSelected.parent as CheckedTreeNode
+
     val component: JComponent
         get() {
-            if (!isUpDownSupported()) {
-                myDecorator.disableUpDownActions()
-            }
-
             myDecorator.addExtraActions(*createExtraActions())
             val myPanel = myDecorator.createPanel()
             return myPanel
@@ -80,11 +92,64 @@ class BuilderItemTree(
     init {
         myDecorator = createToolbarDecorator()
         syncNodes()
+        setupDragAndDrop()
 
         selectionModel.selectionMode = TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION
         isRootVisible = false
         showsRootHandles = true
         model = DefaultTreeModel(root)
+    }
+
+    private fun setupDragAndDrop() {
+        DnDSupport.createBuilder(this)
+            .setBeanProvider {
+                val nodeToDrag = currentNodeSelected
+                if (!nodeToDrag.isParent) {
+                    DnDDragStartBean(nodeToDrag)
+                } else null
+            }
+            .setImageProvider { info: DnDActionInfo ->
+                val point = info.point
+                val path = getPathForLocation(point.x, point.y)
+                if (path != null) {
+                    val image = DnDAwareTree.getDragImage(this, path, point).first
+                    DnDImage(image)
+                } else null
+            }
+            .setTargetChecker(object : DnDTargetChecker {
+                override fun update(event: DnDEvent): Boolean {
+                    val targetPath = getPathForLocation(event.point.x, event.point.y)
+                    val isDropPossible = targetPath != null
+                    event.isDropPossible = isDropPossible
+                    return isDropPossible
+                }
+            })
+            .setDropHandler { event ->
+                val targetPath = getPathForLocation(event.point.x, event.point.y)
+                val targetNode = targetPath?.lastPathComponent as? CheckedTreeNode
+                val draggedNode = event.attachedObject as? CheckedTreeNode
+
+                if (targetNode != null && draggedNode != null && targetNode.isParent) {
+                    val currentParentNode = draggedNode.parent
+                    if (currentParentNode != targetNode) {
+                        val newParentItem = targetNode.item
+                        val updatedItem = draggedNode.item.copy(parent = newParentItem.id)
+                        val updatedNode = CheckedTreeNode(updatedItem)
+
+                        onDroppedListener?.invoke(updatedNode, targetNode)
+                        refreshAfterMutation(updatedNode)
+                    }
+                }
+            }
+            .install()
+    }
+
+    fun addTreeNodeDropListener(listener: (draggedNode: CheckedTreeNode, newParentNode: CheckedTreeNode) -> Unit) {
+        onDroppedListener = listener
+    }
+
+    fun addTreeStructureChangeListener(listener: (nodes: CheckedTreeNode?) -> Unit) {
+        onStructureListener = listener
     }
 
     private fun createToolbarDecorator(): ToolbarDecorator {
@@ -95,49 +160,55 @@ class BuilderItemTree(
 
     private fun createExtraActions(): Array<ActionGroup> {
         val buttons: ActionGroup = DefaultActionGroup().apply {
-            val addButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.add.parent"), AllIcons.General.Add) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        addNewNode()
-                    }
+            val addButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.add.parent"),
+                AllIcons.General.Add,
+                { addNewNode() },
+                { true }
+            )
 
-                    override fun isEnabled(): Boolean = true
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+            val addChildButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.add.child"),
+                AllIcons.Actions.AddFile,
+                { addNewChildNode() },
+                { lastSelectedPathComponent != null }
+            )
+
+            val removeButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.remove"),
+                AllIcons.General.Remove,
+                { if (selectionPaths.size == 1) removeSelectedNode() else removeSelectedNodes() },
+                { lastSelectedPathComponent != null }
+            )
+
+            val duplicateButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.duplicate"),
+                AllIcons.Actions.Copy,
+                { duplicateSelectedNode() },
+                { selectionCount == 1 && lastSelectedPathComponent?.isParent == false }
+            )
+
+            val upButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.up"),
+                AllIcons.Actions.MoveUp,
+                { moveUpSelectedNode() },
+                {
+                    if (selectionCount > 1 || lastSelectedPathComponent == null || lastSelectedPathComponent?.isParent == true) false
+                    else lastSelectedPathComponent?.indexInParent != 0
                 }
+            )
 
-            val addChildButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.add.child"), AllIcons.Actions.AddFile) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        addNewChildNode()
-                    }
-
-                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+            val downButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.down"),
+                AllIcons.Actions.MoveDown,
+                { moveDownSelectedNode() },
+                {
+                    if (selectionCount > 1 || lastSelectedPathComponent == null || (lastSelectedPathComponent?.isParent == true)) false
+                    else lastSelectedPathComponent?.indexInParent != (lastSelectedPathComponent?.parent?.childCount!! - 1)
                 }
+            )
 
-            val removeButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.remove"), AllIcons.General.Remove) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        removeSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val duplicateButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.duplicate"), AllIcons.Actions.Copy) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        duplicateSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean =
-                        lastSelectedPathComponent != null && !(lastSelectedPathComponent as CheckedTreeNode).isParent
-
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val addGroupButton = TreeUtils.actionsPopup(
+            val addGroupButton = ToolbarUtils.actionsPopup(
                 title = message("builder.settings.tree.action.add"),
                 icon = AllIcons.General.Add,
                 actions = mutableListOf<AnAction>().apply {
@@ -148,58 +219,73 @@ class BuilderItemTree(
             add(addGroupButton)
             add(removeButton)
             add(duplicateButton)
+            add(upButton)
+            add(downButton)
         }
         return arrayOf(buttons)
     }
 
-    private fun isUpDownSupported() = false
-
     private fun addNewChildNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val parentNode = selectedNode.parent as CheckedTreeNode
-        val newItem = if (selectedNode.isParent) {
-            Item(parent = (selectedNode.userObject as Item).id, enabled = selectedNode.isChecked)
+        val newItem = if (currentNodeSelected.isParent) {
+            Item(parent = currentNodeSelected.item.id, enabled = currentNodeSelected.isChecked)
         } else {
-            Item(parent = (parentNode.userObject as Item).id, enabled = parentNode.isChecked)
+            Item(parent = parentNodeSelected.item.id, enabled = parentNodeSelected.isChecked)
         }
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNode(findNode(newItem))
+        refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
     private fun addNewNode() {
         val newItem = Item()
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNode(findNode(newItem))
+        refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
-    private fun removeSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val item = selectedNode.userObject
-        if (item is Item) {
-            itemsProperty.get().remove(item)
+    private fun removeSelectedNodes() {
+        val selectedNodes = selectionPaths.map { it.lastPathComponent as CheckedTreeNode }
+        selectedNodes.forEach { removeSelectedNode(it) }
+    }
 
-            if (item.isParent) {
-                val children = itemsProperty.get().filter { it.parent == item.id }
-                children.forEach { childItem ->
-                    itemsProperty.get().remove(childItem)
-                }
+    private fun removeSelectedNode(node: CheckedTreeNode = currentNodeSelected) {
+        val removedItem = node.item
+        itemsProperty.get().remove(removedItem)
+
+        if (removedItem.isParent) {
+            val children = itemsProperty.get().filter { it.parent == removedItem.id }
+            children.forEach { childItem ->
+                itemsProperty.get().remove(childItem)
             }
         }
-        syncNodes()
-        selectNode(null)
+        refreshAfterMutation(null)
     }
 
     private fun duplicateSelectedNode() {
-        val selectedNode = lastSelectedPathComponent as CheckedTreeNode
-        val newItem = (selectedNode.userObject as Item).copy(
+        val newItem = currentNodeSelected.item.copy(
             id = createDefaultId(),
             name = DEFAULT_NAME
         )
         itemsProperty.get().add(newItem)
-        syncNodes()
-        selectNode(findNode(newItem))
+        refreshAfterMutation(CheckedTreeNode(newItem))
+    }
+
+    private fun moveUpSelectedNode() {
+        val movedItem = currentNodeSelected.item
+        val currentIndexInList = itemsProperty.get().indexOf(movedItem)
+
+        itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList - 1].also {
+            itemsProperty.get()[currentIndexInList - 1] = itemsProperty.get()[currentIndexInList]
+        }
+        refreshAfterMutation(currentNodeSelected)
+    }
+
+    private fun moveDownSelectedNode() {
+        val movedItem = currentNodeSelected.item
+        val currentIndexInList = itemsProperty.get().indexOf(movedItem)
+
+        itemsProperty.get()[currentIndexInList] = itemsProperty.get()[currentIndexInList + 1].also {
+            itemsProperty.get()[currentIndexInList + 1] = itemsProperty.get()[currentIndexInList]
+        }
+        refreshAfterMutation(currentNodeSelected)
     }
 
     private fun expandAllNodes(node: TreeNode, path: TreePath) {
@@ -216,29 +302,30 @@ class BuilderItemTree(
         expandAllNodes(root, TreePath(root))
     }
 
-    private fun findNode(item: Item): CheckedTreeNode? {
+    private fun findNodeByItem(item: Item): CheckedTreeNode? {
         val rootNode = model.root as CheckedTreeNode
-        return rootNode.breadthFirstEnumeration().asSequence().map { it as CheckedTreeNode }
-            .find { node ->
-                val selectedObject = node.userObject
-                if (selectedObject is Item) {
-                    (node.userObject as Item).id == item.id
-                } else {
-                    false
-                }
-            }
+        return rootNode.breadthFirstEnumeration().asSequence()
+            .map { it as CheckedTreeNode }
+            .find { node -> node.item.id == item.id }
     }
 
-    fun selectNode(node: CheckedTreeNode?) {
-        if (node != null) {
-            selectionPath = TreePath(node.path)
+    private fun refreshAfterMutation(node: CheckedTreeNode?) {
+        val item = node?.item
+        syncNodes()
+        selectNodeByItem(item)
+        onStructureListener?.invoke(CheckedTreeNode(item))
+    }
+
+    fun selectNodeByItem(item: Item?) {
+        if (item != null) {
+            selectionPath = TreePath(findNodeByItem(item)!!.path)
             return
         }
         clearSelection()
     }
 
-    fun refreshNode(item: Item) {
-        val node = findNode(item)
+    fun refreshNodeByItem(item: Item) {
+        val node = findNodeByItem(item)
         if (node != null && node.userObject != item) {
             node.userObject = item
             (model as DefaultTreeModel).nodeChanged(node)
@@ -268,9 +355,3 @@ class BuilderItemTree(
         }
     }
 }
-
-
-private val CheckedTreeNode.isParent: Boolean
-    get() {
-        return parent === root
-    }
