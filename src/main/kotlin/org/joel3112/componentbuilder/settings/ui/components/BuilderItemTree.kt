@@ -177,7 +177,7 @@ class BuilderItemTree(
             val removeButton = ToolbarUtils.createActionButton(
                 message("builder.settings.tree.action.remove"),
                 AllIcons.General.Remove,
-                { removeSelectedNode() },
+                { if (selectionPaths.size == 1) removeSelectedNode() else removeSelectedNodes() },
                 { lastSelectedPathComponent != null }
             )
 
@@ -193,7 +193,7 @@ class BuilderItemTree(
                 AllIcons.Actions.MoveUp,
                 { moveUpSelectedNode() },
                 {
-                    if (selectionCount > 1 || lastSelectedPathComponent?.isParent == true) false
+                    if (selectionCount > 1 || lastSelectedPathComponent == null || lastSelectedPathComponent?.isParent == true) false
                     else lastSelectedPathComponent?.indexInParent != 0
                 }
             )
@@ -203,7 +203,7 @@ class BuilderItemTree(
                 AllIcons.Actions.MoveDown,
                 { moveDownSelectedNode() },
                 {
-                    if (selectionCount > 1 || (lastSelectedPathComponent?.isParent == true)) false
+                    if (selectionCount > 1 || lastSelectedPathComponent == null || (lastSelectedPathComponent?.isParent == true)) false
                     else lastSelectedPathComponent?.indexInParent != (lastSelectedPathComponent?.parent?.childCount!! - 1)
                 }
             )
@@ -241,8 +241,13 @@ class BuilderItemTree(
         refreshAfterMutation(CheckedTreeNode(newItem))
     }
 
-    private fun removeSelectedNode() {
-        val removedItem = currentNodeSelected.item
+    private fun removeSelectedNodes() {
+        val selectedNodes = selectionPaths.map { it.lastPathComponent as CheckedTreeNode }
+        selectedNodes.forEach { removeSelectedNode(it) }
+    }
+
+    private fun removeSelectedNode(node: CheckedTreeNode = currentNodeSelected) {
+        val removedItem = node.item
         itemsProperty.get().remove(removedItem)
 
         if (removedItem.isParent) {
