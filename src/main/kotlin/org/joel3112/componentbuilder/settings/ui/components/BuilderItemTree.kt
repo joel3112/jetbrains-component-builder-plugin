@@ -3,18 +3,23 @@ package org.joel3112.componentbuilder.settings.ui.components
 import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.*
 import com.intellij.ide.dnd.aware.DnDAwareTree
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.transform
-import com.intellij.ui.*
+import com.intellij.ui.CheckboxTreeBase
+import com.intellij.ui.CheckedTreeNode
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.DEFAULT_NAME
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.settings.data.createDefaultId
-import org.joel3112.componentbuilder.utils.IconUtils
-import org.joel3112.componentbuilder.utils.TreeUtils
+import org.joel3112.componentbuilder.utils.*
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.tree.DefaultTreeModel
@@ -79,10 +84,6 @@ class BuilderItemTree(
 
     val component: JComponent
         get() {
-            if (!isUpDownSupported()) {
-                myDecorator.disableUpDownActions()
-            }
-
             myDecorator.addExtraActions(*createExtraActions())
             val myPanel = myDecorator.createPanel()
             return myPanel
@@ -159,79 +160,55 @@ class BuilderItemTree(
 
     private fun createExtraActions(): Array<ActionGroup> {
         val buttons: ActionGroup = DefaultActionGroup().apply {
-            val addButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.add.parent"), AllIcons.General.Add) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        addNewNode()
-                    }
+            val addButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.add.parent"),
+                AllIcons.General.Add,
+                { addNewNode() },
+                { true }
+            )
 
-                    override fun isEnabled(): Boolean = true
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+            val addChildButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.add.child"),
+                AllIcons.Actions.AddFile,
+                { addNewChildNode() },
+                { lastSelectedPathComponent != null }
+            )
+
+            val removeButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.remove"),
+                AllIcons.General.Remove,
+                { removeSelectedNode() },
+                { lastSelectedPathComponent != null }
+            )
+
+            val duplicateButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.duplicate"),
+                AllIcons.Actions.Copy,
+                { duplicateSelectedNode() },
+                { selectionCount == 1 && lastSelectedPathComponent?.isParent == false }
+            )
+
+            val upButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.up"),
+                AllIcons.Actions.MoveUp,
+                { moveUpSelectedNode() },
+                {
+                    if (selectionCount > 1 || lastSelectedPathComponent?.isParent == true) false
+                    else lastSelectedPathComponent?.indexInParent != 0
                 }
+            )
 
-            val addChildButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.add.child"), AllIcons.Actions.AddFile) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        addNewChildNode()
-                    }
-
-                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+            val downButton = ToolbarUtils.createActionButton(
+                message("builder.settings.tree.action.down"),
+                AllIcons.Actions.MoveDown,
+                { moveDownSelectedNode() },
+                {
+                    if (selectionCount > 1 || (lastSelectedPathComponent?.isParent == true)) false
+                    else lastSelectedPathComponent?.indexInParent != (lastSelectedPathComponent?.parent?.childCount!! - 1)
                 }
+            )
 
-            val removeButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.remove"), AllIcons.General.Remove) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        removeSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean = lastSelectedPathComponent != null
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val duplicateButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.duplicate"), AllIcons.Actions.Copy) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        duplicateSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean =
-                        selectionCount == 1 && lastSelectedPathComponent?.isParent == false
-
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val upButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.up"), AllIcons.Actions.MoveUp) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        moveUpSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean {
-                        if (selectionCount > 1 || lastSelectedPathComponent?.isParent == true) return false
-                        return lastSelectedPathComponent?.indexInParent != 0
-                    }
-
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val downButton: AnActionButton =
-                object : AnActionButton(message("builder.settings.tree.action.down"), AllIcons.Actions.MoveDown) {
-                    override fun actionPerformed(e: AnActionEvent) {
-                        moveDownSelectedNode()
-                    }
-
-                    override fun isEnabled(): Boolean {
-                        if (selectionCount > 1 || (lastSelectedPathComponent?.isParent == true)) return false
-                        return lastSelectedPathComponent?.indexInParent != lastSelectedPathComponent?.parent?.childCount?.minus(
-                            1
-                        )
-                    }
-
-                    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-                }
-
-            val addGroupButton = TreeUtils.actionsPopup(
+            val addGroupButton = ToolbarUtils.actionsPopup(
                 title = message("builder.settings.tree.action.add"),
                 icon = AllIcons.General.Add,
                 actions = mutableListOf<AnAction>().apply {
@@ -247,8 +224,6 @@ class BuilderItemTree(
         }
         return arrayOf(buttons)
     }
-
-    private fun isUpDownSupported() = false
 
     private fun addNewChildNode() {
         val newItem = if (currentNodeSelected.isParent) {
@@ -375,18 +350,3 @@ class BuilderItemTree(
         }
     }
 }
-
-val CheckedTreeNode.item: Item
-    get() = userObject as Item
-
-private val CheckedTreeNode.isParent: Boolean
-    get() = parent === root || this === root
-
-private val CheckedTreeNode.children: MutableList<CheckedTreeNode>?
-    get() = if (isParent) children()?.toList()?.map { it as CheckedTreeNode }?.toMutableList() else null
-
-private val CheckedTreeNode.childrenCount: Int
-    get() = if (isParent) children?.size ?: 0 else 0
-
-private val CheckedTreeNode.indexInParent: Int?
-    get() = (parent as CheckedTreeNode).children?.indexOf(this)
