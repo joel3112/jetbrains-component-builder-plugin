@@ -31,7 +31,7 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
 
         if (selectedLocation != null) {
             ApplicationManager.getApplication().runWriteAction(
-                BuilderCreator(targetLocation!!, selectedLocation.nameWithoutExtension, item, false, project)
+                BuilderCreator(targetLocation!!, selectedLocation.nameWithoutExtension, item, true, project)
             )
         }
     }
