@@ -10,7 +10,7 @@ class BuilderParentActionGroup : DefaultActionGroup() {
     private fun getItems(e: AnActionEvent?): MutableList<Item> {
         val settingsService = e?.project?.service<SettingsService>()
         val enabledItems = settingsService?.getParentItems()?.filter {
-            it.enabled
+            it.enabled && it.filePath.isNotEmpty()
         }?.toMutableList()
         return enabledItems ?: mutableListOf()
     }
