@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.joel3112.componentbuilder.utils.FileUtils
 import org.joel3112.componentbuilder.utils.convertRegexToPath
+import org.joel3112.componentbuilder.utils.replaceName
 import org.joel3112.componentbuilder.utils.replaceVariables
 import java.util.*
 
@@ -36,7 +37,7 @@ data class Item(
 
     val language: Language?
         get() {
-            val fileExtension = FileUtils.getFileExtension(filePathFormatted(name))
+            val fileExtension = FileUtils.getFileExtension(filePath.replaceName(name))
             val fileType = FileTypeManager.getInstance().getFileTypeByExtension(fileExtension)
 
             return if (fileType is LanguageFileType) {
@@ -50,22 +51,22 @@ data class Item(
         return this.hashCode() == other.hashCode()
     }
 
-    fun filePathFormatted(cname: String): String {
+    fun filePathFormatted(cname: String, variables: MutableList<Variable>): String {
         if (isParent) {
-            return filePath.replaceVariables(cname).convertRegexToPath()
+            return filePath.replaceVariables(cname, variables).convertRegexToPath()
         }
-        return filePath.replaceVariables(cname)
+        return filePath.replaceVariables(cname, variables)
     }
 
-    fun regexPathFormatted(cname: String): String? {
+    fun regexPathFormatted(cname: String, variables: MutableList<Variable>): String? {
         if (isParent) {
-            return filePath.replaceVariables(cname)
+            return filePath.replaceVariables(cname, variables)
         }
         return null
     }
 
-    fun templateFormatted(cname: String): String {
-        return template.replaceVariables(cname)
+    fun templateFormatted(cname: String, variables: MutableList<Variable>): String {
+        return template.replaceVariables(cname, variables)
     }
 }
 

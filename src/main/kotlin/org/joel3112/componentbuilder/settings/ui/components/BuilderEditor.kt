@@ -23,7 +23,7 @@ import javax.swing.JTextArea
 import javax.swing.ScrollPaneConstants
 
 class BuilderEditor(val project: Project) : JTextArea() {
-    private val editor: EditorEx = createEditor()
+    val editor: EditorEx = createEditor()
 
     var language: Language? = null
         set(value) {
