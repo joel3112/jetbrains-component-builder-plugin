@@ -71,7 +71,7 @@ class IconUtils {
         }
 
         fun getIconByItem(item: Item): Pair<String, Icon> {
-            val filePath = FileUtils.getFileName(item.filePathFormatted(item.name))
+            val filePath = FileUtils.getFileName(item.filePath.replaceName(item.name))
             return getIconMatchFilePath(filePath)
         }
     }

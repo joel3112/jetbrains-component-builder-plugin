@@ -1,10 +1,12 @@
 package org.joel3112.componentbuilder.utils
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
+import org.joel3112.componentbuilder.settings.data.SettingsService
 import java.io.File
 
 class BuilderCreator(
@@ -14,9 +16,11 @@ class BuilderCreator(
     private val openAfterCreation: Boolean = false,
     private val project: Project
 ) : Runnable {
+    private val settingsService = project.service<SettingsService>()
+    private val variables = settingsService.variables
 
-    private val cTemplate = item.templateFormatted(cname)
-    private val cFilePath = item.filePathFormatted(cname).replaceFirst("/", "")
+    private val cTemplate = item.templateFormatted(cname, variables)
+    private val cFilePath = item.filePathFormatted(cname, variables).replaceFirst("/", "")
 
     private val cRelativeFile = File(cFilePath)
     private val cFile = File(
