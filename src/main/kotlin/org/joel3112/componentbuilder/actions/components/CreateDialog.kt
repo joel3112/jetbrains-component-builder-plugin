@@ -78,7 +78,7 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
                 field = value
 
                 val commentText = if (inputName.isNotEmpty()) {
-                    item.filePathFormatted(inputName)
+                    item.filePathFormatted(inputName, settingsService.variables)
                 } else {
                     ""
                 }

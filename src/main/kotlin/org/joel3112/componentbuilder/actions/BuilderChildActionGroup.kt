@@ -9,41 +9,51 @@ import java.util.regex.Pattern
 
 class BuilderChildActionGroup : DefaultActionGroup() {
 
-    private fun getItems(e: AnActionEvent?): MutableList<Item> {
+    private fun getItems(e: AnActionEvent?): MutableMap<String, MutableList<Item>> {
         val settingsService = e?.project?.service<SettingsService>()
+        val variables = settingsService?.variables ?: mutableListOf()
         val selectedLocation: VirtualFile? = e?.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
 
         val selectedName: String = selectedLocation?.nameWithoutExtension ?: ""
         val selectedPath: String = selectedLocation?.path ?: ""
 
-        val itemMatchFilePathFormatted = settingsService?.items
+        val itemsMatchFilePathFormatted = settingsService?.items
+            // Filter only parent items that are enabled
             ?.filter {
                 it.isParent && it.enabled
             }
-            ?.find {
+            // Filter only items that match the file path
+            ?.filter {
                 val matcher = Pattern.compile(
-                    it.regexPathFormatted(selectedName)!!,
+                    it.regexPathFormatted(selectedName, variables)!!,
                     Pattern.CASE_INSENSITIVE
                 ).matcher(selectedPath)
 
                 matcher.matches()
             }
 
-        if (itemMatchFilePathFormatted != null) {
-            val enabledItems = settingsService.getChildrenByItem(itemMatchFilePathFormatted).filter {
-                it.enabled
-            }.toMutableList()
-            return enabledItems
+        if (itemsMatchFilePathFormatted == null) {
+            return mutableMapOf()
         }
-        return mutableListOf()
+
+        val itemsMatchFilePathFormattedMap = mutableMapOf<String, MutableList<Item>>()
+        itemsMatchFilePathFormatted.forEach { matchItem ->
+            val items = settingsService.getChildrenByItem(matchItem).filter { it.enabled }.toMutableList()
+            itemsMatchFilePathFormattedMap[matchItem.name] = items
+        }
+
+        return itemsMatchFilePathFormattedMap
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val actionGroupItems = mutableListOf<AnAction>()
-        getItems(e).forEach { item ->
-            actionGroupItems.add(BuilderAction(item))
+        val itemsMap = getItems(e)
+        itemsMap.forEach { (name, items) ->
+            actionGroupItems.add(Separator.create(name))
+            items.forEach { item ->
+                actionGroupItems.add(BuilderAction(item))
+            }
         }
-
         return actionGroupItems.toTypedArray()
     }
 
