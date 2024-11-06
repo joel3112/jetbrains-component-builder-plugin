@@ -34,6 +34,7 @@ class BuilderItemsEditor(
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var iconFileDescription: Cell<BuilderIconDescription>
     private lateinit var filePathTextField: Cell<JBTextField>
+    private lateinit var matchRegexTextField: Cell<JBTextField>
     private lateinit var templateEditor: Cell<BuilderEditor>
 
     val templateVariables
@@ -84,7 +85,18 @@ class BuilderItemsEditor(
     override fun Panel.createContent() {
         panel {
             row {
-                text(message("builder.settings.parent.legend"), 60)
+                panel {
+                    row {
+                        text(message("builder.settings.parent.legend"), 60)
+                    }
+                    row {
+                        matchRegexTextField = expandableTextField()
+                            .label(message("builder.settings.regexMatch"), LabelPosition.LEFT)
+                            .columns(COLUMNS_MEDIUM)
+                            .bindText(itemProperty, Item::regexMatch)
+
+                    }.rowComment(message("builder.settings.regexMatch.legend"), 60)
+                }
             }.visibleIf(isChildFilePredicate.not()).bottomGap(BottomGap.NONE)
 
             row {
@@ -112,7 +124,7 @@ class BuilderItemsEditor(
 
             group(message("builder.settings.group.file")) {
                 row {
-                    comment(message("builder.settings.group.file.variables.description"), 35).gap(RightGap.SMALL)
+                    comment(message("builder.settings.group.file.variables.description"), 43).gap(RightGap.SMALL)
                     button(message("builder.dialog.variables.button.open")) {
                         val editVariableDialog = VariablesDialog(settingsProperty, templateVariables, project)
                         editVariableDialog.show()
@@ -127,17 +139,6 @@ class BuilderItemsEditor(
 
                 row {
                     filePathTextField = expandableTextField()
-                        .label(message("builder.settings.regexPath"), LabelPosition.TOP)
-                        .columns(COLUMNS_LARGE)
-                        .bindText(itemProperty, Item::filePath)
-
-                    comment(message("builder.settings.regexPath.example"))
-                }
-                    .rowComment(message("builder.settings.regexPath.legend"), 60)
-                    .visibleIf(isChildFilePredicate.not())
-
-                row {
-                    filePathTextField = expandableTextField()
                         .label(message("builder.settings.filePath"), LabelPosition.TOP)
                         .columns(COLUMNS_LARGE)
                         .bindText(itemProperty, Item::filePath)
@@ -145,7 +146,6 @@ class BuilderItemsEditor(
                     comment(message("builder.settings.filePath.example"))
                 }
                     .rowComment(message("builder.settings.filePath.legend"), 60)
-                    .visibleIf(isChildFilePredicate)
 
                 row {
                     templateEditor = cell(BuilderEditor(project))

@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.joel3112.componentbuilder.utils.FileUtils
-import org.joel3112.componentbuilder.utils.convertRegexToPath
 import org.joel3112.componentbuilder.utils.replaceName
 import org.joel3112.componentbuilder.utils.replaceVariables
 import java.util.*
@@ -28,6 +27,9 @@ data class Item(
 
     @get:OptionTag("FILE_PATH")
     var filePath: String = "",
+
+    @get:OptionTag("REGEX_MATCH")
+    var regexMatch: String = "",
 
     @get:OptionTag("TEMPLATE")
     var template: String = "",
@@ -52,17 +54,7 @@ data class Item(
     }
 
     fun filePathFormatted(cname: String, variables: MutableList<Variable>): String {
-        if (isParent) {
-            return filePath.replaceVariables(cname, variables).convertRegexToPath()
-        }
         return filePath.replaceVariables(cname, variables)
-    }
-
-    fun regexPathFormatted(cname: String, variables: MutableList<Variable>): String? {
-        if (isParent) {
-            return filePath.replaceVariables(cname, variables)
-        }
-        return null
     }
 
     fun templateFormatted(cname: String, variables: MutableList<Variable>): String {
