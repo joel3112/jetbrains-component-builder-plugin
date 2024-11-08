@@ -154,6 +154,7 @@ class BuilderItemsEditor(
                         .align(AlignX.FILL)
                         .applyToComponent {
                             preferredHeight(JBUI.scale(200))
+                            fontSize = JBUI.scaleFontSize(12f)
                         }
                 }.topGap(TopGap.SMALL)
             }
