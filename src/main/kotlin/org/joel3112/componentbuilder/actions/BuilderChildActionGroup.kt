@@ -9,41 +9,37 @@ import java.util.regex.Pattern
 
 class BuilderChildActionGroup : DefaultActionGroup() {
 
-    private fun getItems(e: AnActionEvent?): MutableList<Item> {
+    private fun getItems(e: AnActionEvent?): Pair<String, MutableList<Item>> {
         val settingsService = e?.project?.service<SettingsService>()
         val selectedLocation: VirtualFile? = e?.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
-
-        val selectedName: String = selectedLocation?.nameWithoutExtension ?: ""
         val selectedPath: String = selectedLocation?.path ?: ""
 
-        val itemMatchFilePathFormatted = settingsService?.items
-            ?.filter {
-                it.isParent && it.enabled
-            }
-            ?.find {
+        val itemMatchRegex = settingsService?.items
+            // Filter only parent items that are enabled
+            ?.filter { it.isParent && it.enabled }
+            // Find the first item that match the file path
+            ?.firstOrNull {
                 val matcher = Pattern.compile(
-                    it.regexPathFormatted(selectedName)!!,
-                    Pattern.CASE_INSENSITIVE
+                    it.regexMatch
                 ).matcher(selectedPath)
 
                 matcher.matches()
             }
 
-        if (itemMatchFilePathFormatted != null) {
-            val enabledItems = settingsService.getChildrenByItem(itemMatchFilePathFormatted).filter {
-                it.enabled
-            }.toMutableList()
-            return enabledItems
+        if (itemMatchRegex != null) {
+            val items = settingsService.getChildrenByItem(itemMatchRegex).filter { it.enabled }.toMutableList()
+            return itemMatchRegex.name to items
         }
-        return mutableListOf()
+        return "" to mutableListOf()
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         val actionGroupItems = mutableListOf<AnAction>()
-        getItems(e).forEach { item ->
+        val (name, items) = getItems(e)
+        actionGroupItems.add(Separator.create(name))
+        items.forEach { item ->
             actionGroupItems.add(BuilderAction(item))
         }
-
         return actionGroupItems.toTypedArray()
     }
 
@@ -54,7 +50,8 @@ class BuilderChildActionGroup : DefaultActionGroup() {
             e.presentation.isVisible = false
         }
 
-        e.presentation.isEnabled = getItems(e).isNotEmpty()
+        val (name, items) = getItems(e)
+        e.presentation.isEnabled = name.isNotEmpty() && items.isNotEmpty()
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread {

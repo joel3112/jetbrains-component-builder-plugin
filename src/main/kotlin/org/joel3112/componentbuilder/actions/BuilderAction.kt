@@ -31,7 +31,13 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
 
         if (selectedLocation != null) {
             ApplicationManager.getApplication().runWriteAction(
-                BuilderCreator(targetLocation!!, selectedLocation.nameWithoutExtension, item, true, project)
+                BuilderCreator(
+                    targetLocation!!,
+                    selectedLocation.nameWithoutExtension,
+                    item,
+                    true,
+                    project
+                )
             )
         }
     }
@@ -48,7 +54,14 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
 
         val selectedLocation: VirtualFile? = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
         val targetLocation = selectedLocation?.let { getLocation(it) }
-        val parentCreator = BuilderCreator(targetLocation!!, dialog.cname, item, true, project)
+        val parentCreator =
+            BuilderCreator(
+                targetLocation!!,
+                dialog.cname,
+                item.apply { template = dialog.ctemplate },
+                true,
+                project
+            )
         ApplicationManager.getApplication().runWriteAction(parentCreator)
 
         // Create child files that were selected in the dialog

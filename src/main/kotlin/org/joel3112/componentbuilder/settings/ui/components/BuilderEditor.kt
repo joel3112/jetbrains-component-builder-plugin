@@ -1,9 +1,11 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
+import com.intellij.application.options.EditorFontsConstants
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -23,13 +25,24 @@ import javax.swing.JTextArea
 import javax.swing.ScrollPaneConstants
 
 class BuilderEditor(val project: Project) : JTextArea() {
-    private val editor: EditorEx = createEditor()
+    val editor: EditorEx = createEditor()
 
     var language: Language? = null
         set(value) {
             this.setSyntaxHighlighting(value)
         }
 
+    var fontSize: Int = EditorFontsConstants.getDefaultEditorFontSize()
+        set(value) {
+            field = value
+            updateEditorFontSize()
+        }
+
+    private fun updateEditorFontSize() {
+        editor.colorsScheme = (editor.colorsScheme.clone() as EditorColorsScheme).apply {
+            editorFontSize = fontSize // Apply the font size to the cloned scheme
+        }
+    }
     init {
         layout = BorderLayout()
         add(editor.component)

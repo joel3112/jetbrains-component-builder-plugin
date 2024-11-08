@@ -2,44 +2,56 @@
     <option name="ITEMS">
         <list>
             <Item>
-                <option name="FILE_PATH" value=".*\/(${KEBAB_NAME}\/)?${PASCAL_NAME}\.tsx"/>
+                <option name="FILE_PATH" value="/$KEBAB_NAME$/$PASCAL_NAME$.tsx"/>
                 <option name="ID" value="28e7b2b1-d786-441c-9e1b-04182f15923a"/>
                 <option name="NAME" value="Component"/>
+                <option name="REGEX_MATCH" value=".*\/(.*)\.tsx"/>
                 <option name="TEMPLATE"
-                        value="import React from 'react';&#10;&#10;type ${PASCAL_NAME}Props = {&#10;    title: string;&#10;};&#10;&#10;export const ${PASCAL_NAME} = ({ title }: ${PASCAL_NAME}Props) =&gt; {&#10;    return &lt;h1&gt;{title | '${PASCAL_NAME} Component'}&lt;/h1&gt;&#10;};&#10;"/>
+                        value="import * as React from &quot;react&quot;;&#10;&#10;type $PASCAL_NAME$Props = {&#10;    title: string;&#10;};&#10;&#10;export const $PASCAL_NAME$ = ({ title }: $PASCAL_NAME$Props) =&gt; {&#10;    return &lt;h1&gt;{title | '$PASCAL_NAME$ Component'}&lt;/h1&gt;&#10;};&#10;"/>
             </Item>
             <Item>
-                <option name="FILE_PATH" value="${PASCAL_NAME}.module.css"/>
+                <option name="FILE_PATH" value="$PASCAL_NAME$.module.css"/>
                 <option name="ID" value="4b9e9488-6f7a-4681-85de-fdc22060b982"/>
                 <option name="NAME" value="Styles"/>
                 <option name="PARENT" value="28e7b2b1-d786-441c-9e1b-04182f15923a"/>
-                <option name="TEMPLATE" value=".${PASCAL_NAME}Container {&#10;    display: flex;&#10;}&#10;"/>
+                <option name="TEMPLATE" value=".$PASCAL_NAME$Container {&#10;    display: flex;&#10;}&#10;"/>
             </Item>
             <Item>
-                <option name="FILE_PATH" value="${PASCAL_NAME}.test.ts"/>
+                <option name="FILE_PATH" value="/__tests__/$PASCAL_NAME$.test.ts"/>
                 <option name="ID" value="a2033f1f-a960-4f94-843b-a6fda038ad82"/>
                 <option name="NAME" value="Tests"/>
                 <option name="PARENT" value="28e7b2b1-d786-441c-9e1b-04182f15923a"/>
             </Item>
             <Item>
-                <option name="FILE_PATH" value=".*\/${REACT_HOOK_NAME}\.ts"/>
+                <option name="FILE_PATH" value="$CAMEL_NAME$.ts"/>
                 <option name="ID" value="3db21e9e-28a6-49bf-a2c6-bbe3639c2ce0"/>
                 <option name="NAME" value="Hook"/>
+                <option name="REGEX_MATCH" value=".*\/(use[A-Z].*)\.ts"/>
                 <option name="TEMPLATE"
-                        value="import React from 'react';&#10;&#10;export const ${CAMEL_NAME} = () =&gt; {&#10;    const [state, setState] = React.useState();&#10;    &#10;    return state;&#10;};&#10;"/>
+                        value="import React from 'react';&#10;&#10;export const $CAMEL_NAME$ = () =&gt; {&#10;    const [state, setState] = React.useState();&#10;    &#10;    return state;&#10;};&#10;"/>
             </Item>
             <Item>
-                <option name="FILE_PATH" value="/_tests_/use${PASCAL_NAME}.test.ts"/>
+                <option name="FILE_PATH" value="/__tests__/$CAMEL_NAME$.test.ts"/>
                 <option name="ID" value="94bea9b1-519a-436c-9355-313e1d0e9a9c"/>
-                <option name="NAME" value="Hook Tests"/>
+                <option name="NAME" value="Tests"/>
                 <option name="PARENT" value="3db21e9e-28a6-49bf-a2c6-bbe3639c2ce0"/>
             </Item>
             <Item>
-                <option name="FILE_PATH" value=".*\/(?!use)${CAMEL_NAME}\.ts"/>
+                <option name="FILE_PATH" value="$CAMEL_NAME$.ts"/>
                 <option name="ID" value="8ba8d52c-0599-4065-aa8c-60b73152caa3"/>
                 <option name="NAME" value="Util"/>
-                <option name="TEMPLATE" value="export const ${CAMEL_NAME} = () =&gt; null;&#10;"/>
+                <option name="REGEX_MATCH" value=".*\/(.*)\.ts"/>
+                <option name="TEMPLATE" value="export const $CAMEL_NAME$ = () =&gt; null;&#10;"/>
             </Item>
+        </list>
+    </option>
+    <option name="VARIABLES">
+        <list>
+            <Variable>
+                <option name="EXPRESSION" value="fileNameWithoutExtension()"/>
+                <option name="NAME" value="NAME"/>
+                <option name="REQUIRED" value="true"/>
+            </Variable>
         </list>
     </option>
 </component>

@@ -1,5 +1,6 @@
 package org.joel3112.componentbuilder.settings.ui.components
 
+import com.intellij.codeInsight.template.impl.TemplateImplUtil
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.isNotNull
@@ -14,6 +15,7 @@ import com.intellij.ui.layout.not
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
+import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.preferredHeight
 import org.joel3112.componentbuilder.utils.preferredWidth
@@ -21,6 +23,7 @@ import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
 
 class BuilderItemsEditor(
+    val settingsProperty: GraphProperty<SettingsService>,
     val itemProperty: GraphProperty<Item?>,
     val project: Project
 ) :
@@ -31,7 +34,14 @@ class BuilderItemsEditor(
     private lateinit var nameTextField: Cell<JBTextField>
     private lateinit var iconFileDescription: Cell<BuilderIconDescription>
     private lateinit var filePathTextField: Cell<JBTextField>
+    private lateinit var matchRegexTextField: Cell<JBTextField>
     private lateinit var templateEditor: Cell<BuilderEditor>
+
+    val templateVariables
+        get() = TemplateImplUtil.parseVariables(
+            "${itemProperty.get()?.filePath} - ${itemProperty.get()?.template}"
+        ).map { it.value.name }
+
 
     private val selectedRowPredicate = object : ComponentPredicate() {
         override fun invoke() = itemProperty.isNotNull().get()
@@ -51,6 +61,15 @@ class BuilderItemsEditor(
             }
     }
 
+    private val hasTemplatePredicate = object : ComponentPredicate() {
+        override fun invoke() = templateVariables.isNotEmpty()
+
+        override fun addListener(listener: (Boolean) -> Unit) =
+            itemProperty.afterChange {
+                listener(templateVariables.isNotEmpty())
+            }
+    }
+
     init {
         itemProperty.afterChange {
             if (it != null) {
@@ -66,7 +85,18 @@ class BuilderItemsEditor(
     override fun Panel.createContent() {
         panel {
             row {
-                text(message("builder.settings.parent.legend"), 60)
+                panel {
+                    row {
+                        text(message("builder.settings.parent.legend"), 60)
+                    }
+                    row {
+                        matchRegexTextField = expandableTextField()
+                            .label(message("builder.settings.regexMatch"), LabelPosition.LEFT)
+                            .columns(COLUMNS_MEDIUM)
+                            .bindText(itemProperty, Item::regexMatch)
+
+                    }.rowComment(message("builder.settings.regexMatch.legend"), 60)
+                }
             }.visibleIf(isChildFilePredicate.not()).bottomGap(BottomGap.NONE)
 
             row {
@@ -94,38 +124,28 @@ class BuilderItemsEditor(
 
             group(message("builder.settings.group.file")) {
                 row {
-                    comment(message("builder.settings.group.file.description"))
+                    comment(message("builder.settings.group.file.variables.description"), 43).gap(RightGap.SMALL)
+                    button(message("builder.dialog.variables.button.open")) {
+                        val editVariableDialog = VariablesDialog(settingsProperty, templateVariables, project)
+                        editVariableDialog.show()
+
+                    }
+                        .enabledIf(hasTemplatePredicate)
+                        .applyToComponent {
+                            isDefaultCapable = false
+                            setMaximumSize(getPreferredSize())
+                        }
                 }
 
                 row {
-                    panel {
-                        row {
-                            comment(message("builder.settings.regexPath.legend"), 60)
-                        }
+                    filePathTextField = expandableTextField()
+                        .label(message("builder.settings.filePath"), LabelPosition.TOP)
+                        .columns(COLUMNS_LARGE)
+                        .bindText(itemProperty, Item::filePath)
 
-                        row(message("builder.settings.regexPath")) {
-                            filePathTextField = expandableTextField()
-                                .columns(COLUMNS_LARGE)
-                                .comment(message("builder.settings.regexPath.example"))
-                                .bindText(itemProperty, Item::filePath)
-                        }
-                    }
-                }.visibleIf(isChildFilePredicate.not())
-
-                row {
-                    panel {
-                        row {
-                            comment(message("builder.settings.filePath.legend"), 60)
-                        }
-
-                        row(message("builder.settings.filePath")) {
-                            filePathTextField = expandableTextField()
-                                .columns(COLUMNS_LARGE)
-                                .comment(message("builder.settings.filePath.example"))
-                                .bindText(itemProperty, Item::filePath)
-                        }
-                    }
-                }.visibleIf(isChildFilePredicate)
+                    comment(message("builder.settings.filePath.example"))
+                }
+                    .rowComment(message("builder.settings.filePath.legend"), 60)
 
                 row {
                     templateEditor = cell(BuilderEditor(project))
@@ -134,8 +154,9 @@ class BuilderItemsEditor(
                         .align(AlignX.FILL)
                         .applyToComponent {
                             preferredHeight(JBUI.scale(200))
+                            fontSize = JBUI.scaleFontSize(12f)
                         }
-                }
+                }.topGap(TopGap.SMALL)
             }
         }.enabledIf(selectedRowPredicate)
     }

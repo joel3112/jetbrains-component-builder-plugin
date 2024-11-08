@@ -13,7 +13,10 @@ import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
+import org.joel3112.componentbuilder.settings.ui.components.BuilderEditor
 import org.joel3112.componentbuilder.utils.IconUtils
+import org.joel3112.componentbuilder.utils.preferredHeight
+import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -29,6 +32,7 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
     private val children = settingsService.getChildrenByItem(item)
 
     private lateinit var textField: Cell<JBTextField>
+    private lateinit var templateEditor: Cell<BuilderEditor>
     private var commentLabel: Cell<CommentLabel>? = null
     private var childrenCommentLabel: MutableList<Cell<CommentLabel>> = mutableListOf()
 
@@ -63,13 +67,25 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
                 commentLabel!!.component.inputName = value
                 childrenCommentLabel.forEach { it.component.inputName = value }
                 isValidNameProperty.set(value.isValidName())
+
+                templateProperty.set(
+                    if (value.isValidName())
+                        item.templateFormatted(value, settingsService.variables)
+                    else ""
+                )
+                templateEditor.component.language = item.language
+                templateEditor.component.isEnabled = value.isValidName()
                 repaint()
             }
         }
+    private val templateProperty = propertyGraph
+        .property("")
 
 
     val cname: String
         get() = nameProperty.get()
+    val ctemplate: String
+        get() = templateProperty.get()
     val selectedChildren: MutableList<Item> = mutableListOf()
 
     private inner class CommentLabel(val item: Item) : JBLabel() {
@@ -78,7 +94,7 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
                 field = value
 
                 val commentText = if (inputName.isNotEmpty()) {
-                    item.filePathFormatted(inputName)
+                    item.filePathFormatted(inputName, settingsService.variables)
                 } else {
                     ""
                 }
@@ -130,6 +146,17 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
         row {
             commentLabel = cell(CommentLabel(item)).align(AlignX.FILL)
         }.topGap(TopGap.NONE)
+
+        row {
+            templateEditor = cell(BuilderEditor(project))
+                .bindText(templateProperty)
+                .align(AlignX.FILL)
+                .applyToComponent {
+                    preferredWidth(JBUI.scale(500))
+                    preferredHeight(JBUI.scale(200))
+                    fontSize = JBUI.scaleFontSize(12f)
+                }
+        }
 
         collapsibleGroup(message("builder.popup.create.advanced.options.title")) {
             row {
