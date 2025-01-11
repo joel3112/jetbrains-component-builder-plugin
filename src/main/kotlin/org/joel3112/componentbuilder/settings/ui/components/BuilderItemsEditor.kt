@@ -14,6 +14,8 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.not
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
+import org.joel3112.componentbuilder.components.BuilderEditor
+import org.joel3112.componentbuilder.components.BuilderLabeledIcon
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
@@ -32,7 +34,7 @@ class BuilderItemsEditor(
     private lateinit var isChildFileCheckBox: Cell<JBCheckBox>
     private lateinit var parentExtensionsTextField: Cell<JBTextField>
     private lateinit var nameTextField: Cell<JBTextField>
-    private lateinit var iconFileDescription: Cell<BuilderIconDescription>
+    private lateinit var iconFileDescription: Cell<BuilderLabeledIcon>
     private lateinit var filePathTextField: Cell<JBTextField>
     private lateinit var matchRegexTextField: Cell<JBTextField>
     private lateinit var templateEditor: Cell<BuilderEditor>
@@ -74,7 +76,7 @@ class BuilderItemsEditor(
         itemProperty.afterChange {
             if (it != null) {
                 val (fileType, icon) = IconUtils.getIconByItem(it)
-                iconFileDescription.component.icon = icon!!
+                iconFileDescription.component.icon = icon
                 iconFileDescription.component.text = fileType
                 templateEditor.component.language = it.language
             }
@@ -113,7 +115,7 @@ class BuilderItemsEditor(
                         .label(message("builder.settings.name"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::name)
 
-                    iconFileDescription = cell(BuilderIconDescription())
+                    iconFileDescription = cell(BuilderLabeledIcon())
                         .label(message("builder.settings.icon"), LabelPosition.TOP)
                         .visibleIf(selectedRowPredicate)
                         .applyToComponent {

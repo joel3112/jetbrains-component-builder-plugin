@@ -11,9 +11,9 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
+import org.joel3112.componentbuilder.components.BuilderEditor
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
-import org.joel3112.componentbuilder.settings.ui.components.BuilderEditor
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.preferredHeight
 import org.joel3112.componentbuilder.utils.preferredWidth

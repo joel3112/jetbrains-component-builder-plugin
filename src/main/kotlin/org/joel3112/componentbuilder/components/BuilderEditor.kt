@@ -1,4 +1,4 @@
-package org.joel3112.componentbuilder.settings.ui.components
+package org.joel3112.componentbuilder.components
 
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.lang.Language
@@ -43,6 +43,7 @@ class BuilderEditor(val project: Project) : JTextArea() {
             editorFontSize = fontSize // Apply the font size to the cloned scheme
         }
     }
+
     init {
         layout = BorderLayout()
         add(editor.component)
