@@ -41,5 +41,13 @@
             <add-to-group group-id="NewGroup" anchor="first"/>
             <separator/>
         </group>
+        <action id="org.joel3112.componentbuilder.actions.BuilderSelectionAction"
+               class="org.joel3112.componentbuilder.actions.BuilderSelectionAction"
+               text="Save as builder template"
+                icon="/icons/builder.svg"
+               description="Save selection as template using the builder settings"
+        >
+            <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="$Paste"/>
+        </action>
     </actions>
 </idea-plugin>
