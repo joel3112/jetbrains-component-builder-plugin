@@ -149,11 +149,11 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
         row {
             templateEditor = cell(BuilderEditor(project))
                 .bindText(templateProperty)
-                .align(AlignX.FILL)
+                .align(Align.FILL)
                 .applyToComponent {
-                    preferredWidth(JBUI.scale(550))
+                    preferredWidth(JBUI.scale(600))
                 }
-        }
+        }.resizableRow()
 
         collapsibleGroup(message("builder.popup.create.advanced.options.title")) {
             row {
@@ -187,7 +187,7 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
 
     init {
         super.init()
-        isResizable = false
+        isResizable = true
         title = message("builder.popup.create.title", item.name)
         okAction.isEnabled = false
     }

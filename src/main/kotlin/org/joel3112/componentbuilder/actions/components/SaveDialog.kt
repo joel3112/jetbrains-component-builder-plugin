@@ -87,14 +87,14 @@ open class SaveDialog(
                 .label(message("builder.settings.template"), LabelPosition.TOP)
                 .align(Align.FILL)
                 .applyToComponent {
-                    preferredWidth(JBUI.scale(550))
+                    preferredWidth(JBUI.scale(600))
                 }
-        }.topGap(TopGap.SMALL)
+        }.resizableRow().topGap(TopGap.SMALL)
     }
 
     init {
         super.init()
-        isResizable = false
+        isResizable = true
         title = message("builder.popup.save.title")
         okAction.isEnabled = true
 
