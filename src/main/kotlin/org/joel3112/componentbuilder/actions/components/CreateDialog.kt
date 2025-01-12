@@ -15,7 +15,6 @@ import org.joel3112.componentbuilder.components.BuilderEditor
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
-import org.joel3112.componentbuilder.utils.preferredHeight
 import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -152,9 +151,7 @@ open class CreateDialog(project: Project, val item: Item) : DialogWrapper(projec
                 .bindText(templateProperty)
                 .align(AlignX.FILL)
                 .applyToComponent {
-                    preferredWidth(JBUI.scale(500))
-                    preferredHeight(JBUI.scale(200))
-                    fontSize = JBUI.scaleFontSize(12f)
+                    preferredWidth(JBUI.scale(550))
                 }
         }
 

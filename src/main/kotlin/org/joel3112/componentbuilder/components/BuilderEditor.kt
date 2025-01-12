@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.joel3112.componentbuilder.utils.preferredHeight
 import java.awt.BorderLayout
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -55,6 +56,10 @@ class BuilderEditor(val project: Project) : JTextArea() {
                 editor.contentComponent.requestFocusInWindow()
             }
         })
+
+        fontSize = JBUI.scaleFontSize(12f)
+        preferredHeight(JBUI.scale(300))
+        minimumSize = preferredSize
     }
 
     override fun setText(value: String) {

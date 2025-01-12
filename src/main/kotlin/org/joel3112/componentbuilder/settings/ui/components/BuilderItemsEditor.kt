@@ -19,7 +19,6 @@ import org.joel3112.componentbuilder.components.BuilderLabeledIcon
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.settings.data.SettingsService
 import org.joel3112.componentbuilder.utils.IconUtils
-import org.joel3112.componentbuilder.utils.preferredHeight
 import org.joel3112.componentbuilder.utils.preferredWidth
 import javax.swing.text.JTextComponent
 import kotlin.reflect.KMutableProperty1
@@ -154,10 +153,6 @@ class BuilderItemsEditor(
                         .label(message("builder.settings.template"), LabelPosition.TOP)
                         .bindText(itemProperty, Item::template)
                         .align(AlignX.FILL)
-                        .applyToComponent {
-                            preferredHeight(JBUI.scale(200))
-                            fontSize = JBUI.scaleFontSize(12f)
-                        }
                 }.topGap(TopGap.SMALL)
             }
         }.enabledIf(selectedRowPredicate)
