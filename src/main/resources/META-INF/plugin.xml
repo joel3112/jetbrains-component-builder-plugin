@@ -21,6 +21,11 @@
     </extensions>
 
     <actions>
+        <action id="org.joel3112.componentbuilder.actions.BuildOpenSettingsAction"
+                class="org.joel3112.componentbuilder.actions.BuildOpenSettingsAction"
+                icon="/icons/builder.svg"
+                text="Open Settings" />
+
         <group id="org.joel3112.componentbuilder.actions.ParentBuilderActionGroup"
                class="org.joel3112.componentbuilder.actions.BuilderParentActionGroup"
                text="File from Builder"

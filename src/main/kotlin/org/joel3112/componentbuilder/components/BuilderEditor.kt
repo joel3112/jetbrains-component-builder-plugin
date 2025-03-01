@@ -57,7 +57,6 @@ class BuilderEditor(val project: Project) : JTextArea() {
             }
         })
 
-        fontSize = JBUI.scaleFontSize(12f)
         preferredHeight(JBUI.scale(300))
         minimumSize = preferredSize
     }

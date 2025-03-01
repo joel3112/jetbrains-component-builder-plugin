@@ -5,12 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.layout.ComponentPredicate
-import com.intellij.ui.layout.not
 import com.intellij.util.ui.JBUI
 import org.joel3112.componentbuilder.BuilderBundle.message
 import org.joel3112.componentbuilder.components.BuilderEditor
-import org.joel3112.componentbuilder.components.BuilderLabeledIcon
 import org.joel3112.componentbuilder.settings.data.Item
 import org.joel3112.componentbuilder.utils.IconUtils
 import org.joel3112.componentbuilder.utils.preferredWidth
@@ -32,13 +29,6 @@ open class SaveDialog(
     private val selectedItemProperty = propertyGraph
         .property<Item?>(null)
 
-    private val matchByRegexPredicate = object : ComponentPredicate() {
-        override fun invoke() = item != null
-
-        override fun addListener(listener: (Boolean) -> Unit) =
-            listener(item != null)
-    }
-
     var isCanceled = false
         protected set
     val ctemplate: String
@@ -47,15 +37,6 @@ open class SaveDialog(
         get() = selectedItemProperty.get()
 
     private val savePanel = panel {
-        row {
-            cell(BuilderLabeledIcon().apply {
-                this.text = item?.name ?: ""
-                this.icon = if (item != null) IconUtils.getIconByItem(item).second else null
-            })
-                .label(message("builder.popup.save.name.label.matched"), LabelPosition.TOP)
-                .align(AlignX.FILL)
-        }.visibleIf(matchByRegexPredicate)
-
         row {
             val listRenderer =
                 ListCellRenderer<Item?> { list, value, _, isSelected, _ ->
@@ -78,7 +59,7 @@ open class SaveDialog(
                 .onChanged {
                     selectedItemProperty.set(it.item)
                 }
-        }.visibleIf(matchByRegexPredicate.not())
+        }
 
         row {
             templateEditor = cell(BuilderEditor(project))

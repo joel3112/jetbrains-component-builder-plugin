@@ -54,11 +54,13 @@ class BuilderAction(val item: Item) : DumbAwareAction() {
 
         val selectedLocation: VirtualFile? = e.getData<VirtualFile>(CommonDataKeys.VIRTUAL_FILE)
         val targetLocation = selectedLocation?.let { getLocation(it) }
+        val itemWithTemplate = item.copy(template = dialog.ctemplate)
+
         val parentCreator =
             BuilderCreator(
                 targetLocation!!,
                 dialog.cname,
-                item.apply { template = dialog.ctemplate },
+                itemWithTemplate,
                 true,
                 project
             )

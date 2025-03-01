@@ -104,7 +104,7 @@ class BuilderItemTree(
         DnDSupport.createBuilder(this)
             .setBeanProvider {
                 val nodeToDrag = currentNodeSelected
-                if (!nodeToDrag.isParent) {
+                if (!nodeToDrag.isParent || (nodeToDrag.isParent && nodeToDrag.childrenCount == 0)) {
                     DnDDragStartBean(nodeToDrag)
                 } else null
             }
