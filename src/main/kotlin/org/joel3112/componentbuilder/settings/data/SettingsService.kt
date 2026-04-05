@@ -39,6 +39,6 @@ class SettingsService : SettingsState, BaseState(), PersistentStateComponent<Set
     }
 
     fun getChildrenByItem(item: Item): List<Item> {
-        return items.filter { it.parent == item.id && it.filePath.isNotEmpty() }
+        return items.filter { it.parentComponent == item.id && it.filePath.isNotEmpty() }
     }
 }

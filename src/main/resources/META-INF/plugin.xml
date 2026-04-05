@@ -48,7 +48,7 @@
         </group>
         <action id="org.joel3112.componentbuilder.actions.BuilderSelectionAction"
                class="org.joel3112.componentbuilder.actions.BuilderSelectionAction"
-               text="Save as builder template"
+               text="Save as Builder Template"
                 icon="/icons/builder.svg"
                description="Save selection as template using the builder settings"
         >

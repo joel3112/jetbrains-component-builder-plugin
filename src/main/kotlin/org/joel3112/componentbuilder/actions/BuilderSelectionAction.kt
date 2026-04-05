@@ -37,7 +37,7 @@ class BuilderSelectionAction : DumbAwareAction() {
     }
 
     private fun generateLabel(item: Item, settingsService: SettingsService): String {
-        val parent = settingsService.items.find { it.id == item.parent }
+        val parent = settingsService.items.find { it.id == item.parentComponent }
         return if (item.isParent) {
             item.name
         } else if (parent != null) {
@@ -49,7 +49,7 @@ class BuilderSelectionAction : DumbAwareAction() {
 
     private fun sortByParent(items: List<Item>): List<Item> {
         // Group items by their parent ID
-        val parentToChildrenMap = items.groupBy { it.parent }
+        val parentToChildrenMap = items.groupBy { it.parentComponent }
 
         // Result list to maintain the sorted order
         val sortedList = mutableListOf<Item>()

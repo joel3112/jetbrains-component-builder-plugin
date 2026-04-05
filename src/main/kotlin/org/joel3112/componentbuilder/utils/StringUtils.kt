@@ -2,9 +2,8 @@ package org.joel3112.componentbuilder.utils
 
 
 import VariablesResolver
-import ai.grazie.utils.capitalize
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.webSymbols.utils.NameCaseUtils
+// import com.intellij.webSymbols.utils.NameCaseUtils
 import org.joel3112.componentbuilder.settings.data.Variable
 import java.util.*
 
@@ -19,6 +18,29 @@ private fun checkIfQuoted(str: String, function: (String) -> String): String {
 }
 
 private val variableRegex = """\$(\w+)\$""".toRegex()
+
+object NameCaseUtils {
+    fun toCamelCase(input: String): String {
+        val words = NameUtil.splitNameIntoWords(input)
+        return words.first().lowercase() +
+                words.drop(1).joinToString("") { it.replaceFirstChar(Char::uppercase) }
+    }
+
+    fun toPascalCase(input: String): String {
+        val words = NameUtil.splitNameIntoWords(input)
+        return words.joinToString("") { it.replaceFirstChar(Char::uppercase) }
+    }
+
+    fun toSnakeCase(input: String): String {
+        return NameUtil.splitNameIntoWords(input)
+            .joinToString("_") { it.lowercase() }
+    }
+
+    fun toKebabCase(input: String): String {
+        return NameUtil.splitNameIntoWords(input)
+            .joinToString("-") { it.lowercase() }
+    }
+}
 
 class StringUtils {
     companion object {

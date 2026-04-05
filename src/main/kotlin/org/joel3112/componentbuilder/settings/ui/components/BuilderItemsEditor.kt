@@ -54,11 +54,11 @@ class BuilderItemsEditor(
     }
 
     private val isChildFilePredicate = object : ComponentPredicate() {
-        override fun invoke() = itemProperty.get()?.parent?.isNotEmpty() ?: false
+        override fun invoke() = itemProperty.get()?.parentComponent?.isNotEmpty() ?: false
 
         override fun addListener(listener: (Boolean) -> Unit) =
             itemProperty.afterChange {
-                listener(it?.parent?.isNotEmpty() ?: false)
+                listener(it?.parentComponent?.isNotEmpty() ?: false)
             }
     }
 

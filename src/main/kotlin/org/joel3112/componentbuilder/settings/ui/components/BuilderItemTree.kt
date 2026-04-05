@@ -29,8 +29,8 @@ import javax.swing.tree.TreeSelectionModel
 
 private class CheckBoxTreeCellRenderer : CheckboxTreeBase.CheckboxTreeCellRendererBase(true, false) {
     override fun customizeRenderer(
-        tree: JTree?,
-        value: Any?,
+        tree: JTree,
+        value: Any,
         selected: Boolean,
         expanded: Boolean,
         leaf: Boolean,
@@ -133,7 +133,7 @@ class BuilderItemTree(
                     val currentParentNode = draggedNode.parent
                     if (currentParentNode != targetNode) {
                         val newParentItem = targetNode.item
-                        val updatedItem = draggedNode.item.copy(parent = newParentItem.id)
+                        val updatedItem = draggedNode.item.copy(parentComponent = newParentItem.id)
                         val updatedNode = CheckedTreeNode(updatedItem)
 
                         onDroppedListener?.invoke(updatedNode, targetNode)
@@ -227,9 +227,9 @@ class BuilderItemTree(
 
     private fun addNewChildNode() {
         val newItem = if (currentNodeSelected.isParent) {
-            Item(parent = currentNodeSelected.item.id, enabled = currentNodeSelected.isChecked)
+            Item(parentComponent = currentNodeSelected.item.id, enabled = currentNodeSelected.isChecked)
         } else {
-            Item(parent = parentNodeSelected.item.id, enabled = parentNodeSelected.isChecked)
+            Item(parentComponent = parentNodeSelected.item.id, enabled = parentNodeSelected.isChecked)
         }
         itemsProperty.get().add(newItem)
         refreshAfterMutation(CheckedTreeNode(newItem))
@@ -251,7 +251,7 @@ class BuilderItemTree(
         itemsProperty.get().remove(removedItem)
 
         if (removedItem.isParent) {
-            val children = itemsProperty.get().filter { it.parent == removedItem.id }
+            val children = itemsProperty.get().filter { it.parentComponent == removedItem.id }
             children.forEach { childItem ->
                 itemsProperty.get().remove(childItem)
             }
@@ -341,7 +341,7 @@ class BuilderItemTree(
             setNodeState(node, item.enabled)
             root.add(node)
 
-            val childrenItems = settingsProperty.get().items.filter { it.parent == item.id }
+            val childrenItems = settingsProperty.get().items.filter { it.parentComponent == item.id }
             childrenItems.forEach { childItem ->
                 val childNode = CheckedTreeNode(childItem)
                 setNodeState(childNode, childItem.enabled)

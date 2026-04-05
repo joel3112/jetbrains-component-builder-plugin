@@ -94,7 +94,7 @@ class BuilderSettingsConfigurable(project: Project) : SearchableConfigurable {
                                     if (it.id == itemChanged.id) it.copy(
                                         enabled = node.isChecked,
                                         id = it.id,
-                                        parent = it.parent,
+                                        parentComponent = it.parentComponent,
                                         name = it.name,
                                         filePath = it.filePath,
                                         template = it.template,

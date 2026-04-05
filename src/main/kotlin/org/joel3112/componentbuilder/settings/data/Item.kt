@@ -19,8 +19,9 @@ data class Item(
     @get:OptionTag("ENABLED")
     var enabled: Boolean = true,
 
+    // ONLY FOR CHILDREN
     @get:OptionTag("PARENT")
-    var parent: String = "",
+    var parentComponent: String = "",
 
     @get:OptionTag("NAME")
     var name: String = DEFAULT_NAME,
@@ -28,6 +29,7 @@ data class Item(
     @get:OptionTag("FILE_PATH")
     var filePath: String = "",
 
+    // ONLY FOR PARENTS
     @get:OptionTag("REGEX_MATCH")
     var regexMatch: String = "",
 
@@ -35,7 +37,7 @@ data class Item(
     var template: String = "",
 ) {
     val isParent: Boolean
-        get() = parent.isEmpty()
+        get() = parentComponent.isEmpty()
 
     val language: Language?
         get() {
@@ -69,7 +71,7 @@ fun MutableList<Item>.sortByParent(): MutableList<Item> {
 
     for (parent in parentItems) {
         orderedList.add(parent)
-        val children = this.filter { it.parent == parent.id }
+        val children = this.filter { it.parentComponent == parent.id }
         orderedList.addAll(children)
     }
 
